@@ -13,8 +13,7 @@ class Index(object):
 
     def ensure(self, collection):
         LOGGER.debug("creating index %r/%r" % (self._args, self._kwargs))
-        return collection.create_index(*self._args,
-                                       background=True, **self._kwargs)
+        return collection.ensure_index(*self._args, **self._kwargs)
 
 class classproperty(object):
     def __init__(self, getter):
@@ -175,4 +174,4 @@ class BaseClass(SerializerObject):
             return
 
         for index in indexes:
-            index.ensure(cls.get_collection(db))
+            index.ensure(cls.get_collection(cls, db))

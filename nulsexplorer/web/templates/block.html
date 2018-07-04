@@ -4,6 +4,116 @@
 {% block content %}
 <h2>Block detail</h2>
 <h3>#{{block.height}}</h3>
+<div class="row">
+  <div class="col-sm">
+    <table class="table table-sm table-striped">
+      <tbody>
+        <tr>
+          <th scope="col" colspan="2">Summary</th>
+        </tr>
+        <tr>
+          <td>Confirms</td>
+          <td class="text-right"></td>
+        </tr>
+        <tr>
+          <td>Transactions</td>
+          <td class="text-right">{{block.txCount}}</td>
+        </tr>
+        <tr>
+          <td>Transaction fee</td>
+          <td class="text-right">{{block.fee}}</td>
+        </tr>
+        <tr>
+          <td>Producer</td>
+          <td class="text-right">
+            <a href="/addresses/{{block.packingAddress}}">
+              {{block.packingAddress}}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Time</td>
+          <td class="text-right">{{datetime.fromtimestamp(int(block.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}</td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td class="text-right">{{block.size}} bytes
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col-sm">
+    <table class="table table-sm table-striped">
+      <tbody>
+        <tr>
+          <th scope="col" colspan="2">Hashes</th>
+        </tr>
+        <tr>
+          <td>Block hash</td>
+          <td class="text-right">{{block.hash}}</td>
+        </tr>
+        <tr>
+          <td>Previous hash</td>
+          <td class="text-right">
+            <a href="/blocks/{{block.preHash}}">
+              {{block.preHash}}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Merkle root</td>
+          <td class="text-right">
+            {{block.merkleHash}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+<h4>Transactions</h4>
+{% for transaction in block.txList %}
+  <div class="card mb-3">
+    <div class="card-header">
+      <span class="float-right">
+        {{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}
+      </span>
+      <a href="/transactions/{{transaction.hash}}">
+        {{transaction.hash}}
+      </a>
+    </div>
+    <div class="card-body">
+      <div class="container">
+        <div class="row">
+          <div class="col">
+            {% for input in transaction.inputs %}
+              <p>
+                <a href="/addresses/transaction.outputs[input.fromIndex].address">
+                  {{transaction.outputs[input.fromIndex].address}}
+                </a>
+              </p>
+            {% endfor %}
+          </div>
+          <div class="col-1">
+            ➡️
+          </div>
+          <div class="col">
+            {% for output in transaction.outputs %}
+              <p>
+                <span class="float-right">{{output.value}}</span>
+                <a href="/addresses/output.address">
+                  {{output.address}}
+                </a>
+              </p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endfor %}
+
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>

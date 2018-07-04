@@ -1,4 +1,5 @@
 from nulsexplorer import model
+from nulsexplorer.model.base import BaseClass, Index
 import pymongo
 
 async def get_last_block():
@@ -40,3 +41,10 @@ def ensure_indexes(db):
     db.blocks.ensure_index([("hash", pymongo.ASCENDING)], unique=True)
     db.blocks.ensure_index([("height", pymongo.ASCENDING)], unique=True)
     db.blocks.ensure_index([("height", pymongo.DESCENDING)])
+
+class Block(BaseClass):
+    COLLECTION = "blocks"
+
+    INDEXES = [Index("hash", unique=True),
+               Index("height", pymongo.ASCENDING, unique=True),
+               Index("height", pymongo.DESCENDING)]

@@ -15,6 +15,8 @@ from bson import json_util
 import configparser
 from datetime import date, datetime, timedelta
 
+from nulsexplorer import TRANSACTION_TYPES
+
 
 #bottle.install(bottle.JSONPlugin(json_dumps=json_util.dumps))
 
@@ -31,7 +33,8 @@ env.globals.update({
     'datetime': datetime,
     'timedelta': timedelta,
     'int': int,
-    'float': float
+    'float': float,
+    'TRANSACTION_TYPES': TRANSACTION_TYPES
 })
 
 #bottle.TEMPLATE_PATH.insert(0,tpl_path)

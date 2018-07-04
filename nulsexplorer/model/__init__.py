@@ -31,5 +31,9 @@ def init_db(ensure_indexes=True):
 
     if ensure_indexes:
         # do indexes if needed here...
-        from nulsexplorer.model.blocks import ensure_indexes
-        ensure_indexes(sync_db)
+        #from nulsexplorer.model.blocks import ensure_indexes
+        #ensure_indexes(sync_db)
+        from nulsexplorer.model.transactions import Transaction
+        from nulsexplorer.model.blocks import Block
+        Block.ensure_indexes(sync_db)
+        Transaction.ensure_indexes(sync_db)

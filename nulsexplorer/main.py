@@ -3,6 +3,7 @@ import aiohttp
 from nulsexplorer.web import app
 from nulsexplorer import model
 from nulsexplorer.model.blocks import get_last_block_height
+from nulsexplorer.model.transactions import Transaction
 
 async def api_request(session, uri):
     base_uri = app['config'].nuls.base_uri.value
@@ -35,6 +36,8 @@ async def request_block(session, height=None, hash=None):
 
 async def store_block(block_data):
     doc_id = await model.db.blocks.insert_one(block_data)
+    if len(block_data['txList']):
+        await model.db.transactions.insert_many(block_data['txList'])
     return doc_id
 
 async def check_blocks():
