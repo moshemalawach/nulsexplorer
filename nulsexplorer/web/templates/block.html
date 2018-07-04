@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Block Explorer{% endblock %}
+{% block content %}
+<h2>Block detail</h2>
+<h3>#{{block.height}}</h3>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Height</th>
+      <th scope="col">Time</th>
+      <th scope="col">Transactions</th>
+      <th scope="col">Size</th>
+    </tr>
+  </thead>
+  <tbody>
+
+  </tbody>
+</table>
+{% endblock %}

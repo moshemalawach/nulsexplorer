@@ -1,0 +1,14 @@
+explorer:
+  host: 127.0.0.1
+  port: 8080
+  secret: "CHOOSE A SECRET DAMMIT"
+
+nuls:
+  host: 127.0.0.1
+  port: 8001
+  path: /api/
+  base_uri: "http://127.0.0.1:8001/api/"
+
+mongodb:
+  uri: "mongodb://127.0.0.1"
+  database: nuls
