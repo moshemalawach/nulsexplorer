@@ -7,6 +7,9 @@ db.blocks.aggregate([ {$unwind: "$txList"}, {$replaceRoot: { newRoot: "$txList" 
 import pymongo
 from nulsexplorer.model.base import BaseClass, Index
 
+import logging
+LOGGER = logging.getLogger('model.transactions')
+
 class Transaction(BaseClass):
     COLLECTION = "transactions"
 
@@ -44,5 +47,7 @@ class Transaction(BaseClass):
                     outputdata['status'] = 3 # how to know between 2 and 3 ?
                 else:
                     outputdata['status'] = 0
-
-        await cls.collection.insert_one(tx_data)
+        try:
+            await cls.collection.insert_one(tx_data)
+        except pymongo.errors.DuplicateKeyError:
+            LOGGER.waning("Transaction %s was already there" % transaction['hash'])
