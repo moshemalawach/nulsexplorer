@@ -81,7 +81,7 @@ async def block_list(request):
     blocks = []
     total_blocks = await Block.count()
     page = int(request.match_info.get('page', '1'))
-    async for block in Block.find({}, limit=PER_PAGE, skip=page*PER_PAGE,
+    async for block in Block.find({}, limit=PER_PAGE, skip=(page-1)*PER_PAGE,
                                         sort=[('height', -1)]):
         blocks.append(block)
 
