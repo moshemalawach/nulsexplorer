@@ -20,9 +20,10 @@
                   <span class="float-right">{{input.value/100000000}}</span>
                   <a href="/addresses/{{input.address}}">
                     {{input.address}}
-                  </a><br/>
+                  </a>
                   <a href="/transactions/{{input.fromHash}}#output{{input.fromIndex}}"
-                     title="{{input.fromHash}}">
+                     title="{{input.fromHash}}"
+                     class="text-dark">
                     ⛓
                   </a>
                 {% else %}
