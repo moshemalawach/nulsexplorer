@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import transaction_detail with context %}
-{% block title %}Block Explorer{% endblock %}
+{% block title %}Block #{{block.height}}{% endblock %}
 {% block content %}
 <h2>Block detail</h2>
 <h3>#{{block.height}}</h3>
@@ -13,7 +13,7 @@
         </tr>
         <tr>
           <td>Confirms</td>
-          <td class="text-right"></td>
+          <td class="text-right">{{last_height - block.height}}</td>
         </tr>
         <tr>
           <td>Transactions</td>
@@ -77,21 +77,7 @@
 
 
 <h4>Transactions</h4>
-{% for transaction in block.txList %}
+{% for transaction in transactions %}
   {{ transaction_detail(transaction) }}
 {% endfor %}
-
-<table class="table table-striped">
-  <thead class="thead-dark">
-    <tr>
-      <th scope="col">Height</th>
-      <th scope="col">Time</th>
-      <th scope="col">Transactions</th>
-      <th scope="col">Size</th>
-    </tr>
-  </thead>
-  <tbody>
-
-  </tbody>
-</table>
 {% endblock %}
