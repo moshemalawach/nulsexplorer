@@ -50,4 +50,4 @@ class Transaction(BaseClass):
         try:
             await cls.collection.insert_one(tx_data)
         except pymongo.errors.DuplicateKeyError:
-            LOGGER.waning("Transaction %s was already there" % transaction['hash'])
+            LOGGER.warning("Transaction %s was already there" % transaction['hash'])
