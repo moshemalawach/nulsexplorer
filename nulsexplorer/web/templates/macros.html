@@ -16,14 +16,17 @@
           <div class="col-5">
             {% for input in transaction.inputs %}
               <p>
-                {% if input.fromIndex < len(transaction.outputs) %}
+                {% if input.address %}
                   <span class="float-right">{{input.value/100000000}}</span>
-                  <a href="/addresses/{{transaction.outputs[input.fromIndex].address}}">
-                    {{transaction.outputs[input.fromIndex].address}}
+                  <a href="/addresses/{{input.address}}">
+                    {{input.address}}
+                  </a><br/>
+                  <a href="/transactions/{{input.fromHash}}#output{{input.fromIndex}}">
+                    ({{input.fromHash}})
                   </a>
-                  {% else %}
-                   ❌ Error with transaction input
-                  {% endif %}
+                {% else %}
+                 ❌ Error with transaction input
+                {% endif %}
               </p>
             {% endfor %}
           </div>
