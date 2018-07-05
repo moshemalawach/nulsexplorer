@@ -3,7 +3,7 @@ import aiohttp
 import logging
 from nulsexplorer.web import app
 from nulsexplorer import model
-from nulsexplorer.model.blocks import get_last_block_height
+from nulsexplorer.model.blocks import get_last_block_height, store_block
 from nulsexplorer.model.transactions import Transaction
 
 LOGGER = logging.getLogger('connector')
@@ -36,11 +36,6 @@ async def request_block(session, height=None, hash=None):
 
     return resp
 
-async def store_block(block_data):
-    doc_id = await model.db.blocks.insert_one(block_data)
-    if len(block_data['txList']):
-        await model.db.transactions.insert_many(block_data['txList'])
-    return doc_id
 
 async def check_blocks():
     last_stored_height = await get_last_block_height()

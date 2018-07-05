@@ -1,6 +1,17 @@
 from nulsexplorer import model
 from nulsexplorer.model.base import BaseClass, Index
+from nulsexplorer.model.transaction import Transaction
 import pymongo
+
+async def store_block(block_data):
+    txs = block_data.pop("txList")
+    doc_id = await model.db.blocks.insert_one(block_data)
+    if len(txs):
+        for transaction in txs:
+            await Transaction.input_txdata(transaction)
+        # for now we forget about bulk insert as we have to do some work on it...
+        # await model.db.transactions.insert_many(txs)
+    return doc_id
 
 async def get_last_block():
     query = model.db.blocks.find().sort([('height', -1)]).limit(1)
@@ -36,11 +47,6 @@ async def find_blocks(query, scrubbed=True, sort=None, limit=0):
         sort = [('height', 1)]
 
     return model.db.blocks.find(query, projection=projection, limit=limit).sort(sort)
-
-def ensure_indexes(db):
-    db.blocks.ensure_index([("hash", pymongo.ASCENDING)], unique=True)
-    db.blocks.ensure_index([("height", pymongo.ASCENDING)], unique=True)
-    db.blocks.ensure_index([("height", pymongo.DESCENDING)])
 
 class Block(BaseClass):
     COLLECTION = "blocks"
