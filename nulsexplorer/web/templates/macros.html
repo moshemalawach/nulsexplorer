@@ -9,38 +9,68 @@
     </a>
     <span class="badge badge-primary">{{TRANSACTION_TYPES[transaction.type]}}</span>
   </div>
-  <div class="card-body">
-    <div class="container">
-      <div class="row">
-        <div class="col">
-          {% for input in transaction.inputs %}
-            <p>
-              {% if input.fromIndex < len(transaction.outputs) %}
-                <span class="float-right">{{input.value/100000000}}</span>
-                <a href="/addresses/{{transaction.outputs[input.fromIndex].address}}">
-                  {{transaction.outputs[input.fromIndex].address}}
+  {% if len(transaction.outputs) or len(transaction.inputs) %}
+    <div class="card-body">
+      <div class="container-fluid">
+        <div class="row">
+          <div class="col-5">
+            {% for input in transaction.inputs %}
+              <p>
+                {% if input.fromIndex < len(transaction.outputs) %}
+                  <span class="float-right">{{input.value/100000000}}</span>
+                  <a href="/addresses/{{transaction.outputs[input.fromIndex].address}}">
+                    {{transaction.outputs[input.fromIndex].address}}
+                  </a>
+                  {% else %}
+                   ❌ Error with transaction input
+                  {% endif %}
+              </p>
+            {% endfor %}
+          </div>
+          <div class="col-2">
+            ➡️
+          </div>
+          <div class="col-5">
+            {% for output in transaction.outputs %}
+              <p>
+                <span class="float-right">{{output.value/100000000}}</span>
+                <a href="/addresses/{{output.address}}">
+                  {{output.address}}
                 </a>
-                {% else %}
-                 ❌ Error with transaction input
-                {% endif %}
-            </p>
-          {% endfor %}
-        </div>
-        <div class="col-1">
-          ➡️
-        </div>
-        <div class="col">
-          {% for output in transaction.outputs %}
-            <p>
-              <span class="float-right">{{output.value/100000000}}</span>
-              <a href="/addresses/{{output.address}}">
-                {{output.address}}
-              </a>
-            </p>
-          {% endfor %}
+              </p>
+            {% endfor %}
+          </div>
         </div>
       </div>
     </div>
-  </div>
+    {% endif %}
 </div>
+{%- endmacro %}
+
+{% macro paginate(pagination, base_url, ulclass="") -%}
+<nav aria-label="Navigation">
+  <ul class="pagination {{ulclass}}">
+    {% if pagination.has_prev %}
+      <li class="page-item">
+        <a class="page-link" href="{{base_url}}{{ pagination.page - 1 }}">&laquo; Previous</a>
+      </li>
+    {% endif %}
+    {%- for page in pagination.iter_pages() %}
+      {% if page %}
+        <li class="page-item{% if page == pagination.page %} active{% endif %}">
+          <a class="page-link" href="{{base_url}}{{ page }}">{{ page }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled">
+          <a class="page-link" href="#" tabindex="-1">…</a>
+        </li>
+      {% endif %}
+    {%- endfor %}
+    {% if pagination.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="{{base_url}}{{ pagination.page + 1 }}">Next &raquo;</a>
+      </li>
+    {% endif %}
+  </ul>
+</nav>
 {%- endmacro %}

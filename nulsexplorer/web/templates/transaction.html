@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% from "macros.html" import transaction_detail with context %}
+{% block title %}Transaction detail {{transaction.hash}}{% endblock %}
+{% block content %}
+<h2>Transaction detail</h2>
+<h3>{{transaction.hash}}</h3>
+<div class="row">
+  <div class="col-sm">
+    <table class="table table-sm table-striped">
+      <tbody>
+        <tr>
+          <th scope="col" colspan="2">Summary</th>
+        </tr>
+        <tr>
+          <td>Confirms</td>
+          <td class="text-right">{{last_height - transaction.blockHeight}}</td>
+        </tr>
+        <tr>
+          <td>Transaction fee</td>
+          <td class="text-right">{{transaction.fee/100000000}} NULS</td>
+        </tr>
+        <tr>
+          <td>Type</td>
+          <td class="text-right">{{transaction.type}}
+        </tr>
+        <tr>
+          <td>Block Producer</td>
+          <td class="text-right">
+            <a href="/addresses/{{block.packingAddress}}">
+              {{block.packingAddress}}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Time</td>
+          <td class="text-right">{{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}</td>
+        </tr>
+        <tr>
+          <td>Size</td>
+          <td class="text-right">{{transaction.size}} bytes
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col-sm">
+    <table class="table table-sm table-striped">
+      <tbody>
+        <tr>
+          <th scope="col" colspan="2">Hashes</th>
+        </tr>
+        <tr>
+          <td>Transaction hash</td>
+          <td class="text-right">{{transaction.hash}}</td>
+        </tr>
+        <tr>
+          <td>Block hash</td>
+          <td class="text-right">
+            <a href="/blocks/{{block.hash}}">
+              {{block.hash}}
+            </a>
+          </td>
+        </tr>
+        <tr>
+          <td>Merkle root</td>
+          <td class="text-right">
+            {{block.merkleHash}}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<h4>Detail</h4>
+{{ transaction_detail(transaction) }}
+{% endblock %}

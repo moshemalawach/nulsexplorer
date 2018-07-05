@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% from "macros.html" import paginate with context %}
+
+{% block title %}Block Explorer{% endblock %}
+{% block content %}
+{{paginate(pagination, "/blocks/page/", ulclass="float-right pagination-sm")}}
+<h2>Blocks</h2>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Height</th>
+      <th scope="col">Time</th>
+      <th scope="col">Transactions</th>
+      <th scope="col">Size</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for block in blocks %}
+    <tr>
+      <th scope="row">
+        <a href="/blocks/{{block.hash}}">
+          {{block.height}}
+        </a>
+      </th>
+      <td>{{datetime.fromtimestamp(int(block.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}</td>
+      <td>{{block.txCount}}</td>
+      <td>{{block.size}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{{paginate(pagination, "/blocks/page/", ulclass="float-right  pagination-sm")}}
+{% endblock %}
