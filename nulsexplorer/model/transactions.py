@@ -13,6 +13,7 @@ class Transaction(BaseClass):
     INDEXES = [Index("hash", unique=True),
                Index("blockHeight", pymongo.ASCENDING),
                Index("blockHeight", pymongo.DESCENDING),
+               Index("time", pymongo.DESCENDING),
                Index("outputs.address"),
                Index("inputs.address")]
 
@@ -21,7 +22,7 @@ class Transaction(BaseClass):
         #await cls.collection.insert(tx_data)
         transaction = cls(tx_data)
         for i, inputdata in enumerate(transaction['inputs']):
-            source_tx = await cls.find_one(hash=input['fromHash'])
+            source_tx = await cls.find_one(hash=inputdata['fromHash'])
             if source_tx is not None:
                 in_from = source_tx.outputs[inputdata['fromIndex']]
                 inputdata['address'] = in_from['address']
