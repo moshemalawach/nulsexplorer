@@ -100,10 +100,27 @@ async def view_transaction(request):
     tx_hash = request.match_info['tx_hash']
     transaction = await Transaction.find_one(hash = tx_hash)
     if transaction is None:
-        raise web.HTTPNotFound(text="Block not found")
+        raise web.HTTPNotFound(text="Transaction not found")
     block = await find_block({'height': transaction.blockHeight})
 
     return {'block': block,
             'transaction': transaction,
             'last_height': await get_last_block_height()}
 app.router.add_get('/transactions/{tx_hash}', view_transaction)
+
+@aiohttp_jinja2.template('address.html')
+async def view_address(request):
+    """ Address view
+    """
+    address = request.match_info['address']
+
+    transactions = []
+    async for tx in Transaction.find({'$or':
+                [{'inputs.address': address},
+                 {'inputs.address': address}]}, sort='time', sort_order=-1):
+        transactions.append(tx)
+
+    return {'address': address,
+            'transactions': transactions,
+            'last_height': await get_last_block_height()}
+app.router.add_get('/addresses/{address}', view_address)

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% from "macros.html" import transaction_detail with context %}
+{% block title %}Address detail {{address}}{% endblock %}
+{% block content %}
+<h2>Address detail</h2>
+<h3>{{address}}</h3>
+<h4>Transactions</h4>
+{% for transaction in transactions %}
+  {{ transaction_detail(transaction) }}
+{% endfor %}
+{% endblock %}
