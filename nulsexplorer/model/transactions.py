@@ -20,16 +20,23 @@ class Transaction(BaseClass):
     @classmethod
     async def input_txdata(cls, tx_data):
         #await cls.collection.insert(tx_data)
-        transaction = cls(tx_data)
+        transaction = tx_data
         for i, inputdata in enumerate(transaction['inputs']):
-            source_tx = await cls.find_one(hash=inputdata['fromHash'])
-            if source_tx is not None:
-                in_from = source_tx.outputs[inputdata['fromIndex']]
-                inputdata['address'] = in_from['address']
-                in_from['status'] = 3
-                in_from['toHash'] = transaction.hash
-                in_from['toIndex'] = i
-                await source_tx.save()
+            fidx = inputdata['fromIndex']
+            source_tx = await cls.collection.find_one_and_update(
+                dict(hash=inputdata['fromHash']),
+                {'$set': {
+                    ('outputs.%d.status' % fidx): 3,
+                    ('outputs.%d.toHash' % fidx): transaction['hash'],
+                    ('outputs.%d.toIndex' % fidx): i
+                }})
+            # if source_tx is not None:
+            #     in_from = source_tx.outputs[inputdata['fromIndex']]
+            #     inputdata['address'] = in_from['address']
+            #     in_from['status'] = 3
+            #     in_from['toHash'] = transaction.hash
+            #     in_from['toIndex'] = i
+            #     await source_tx.save()
 
         for outputdata in transaction['outputs']:
             if 'status' not in outputdata:
@@ -38,4 +45,4 @@ class Transaction(BaseClass):
                 else:
                     outputdata['status'] = 0
 
-        await transaction.save()
+        await cls.collection.insert_one(tx_data)

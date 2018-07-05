@@ -5,10 +5,10 @@ import pymongo
 
 async def store_block(block_data):
     txs = block_data.pop("txList")
-    doc_id = await model.db.blocks.insert_one(block_data)
     if len(txs):
         for transaction in txs:
             await Transaction.input_txdata(transaction)
+    doc_id = await model.db.blocks.insert_one(block_data)
         # for now we forget about bulk insert as we have to do some work on it...
         # await model.db.transactions.insert_many(txs)
     return doc_id
