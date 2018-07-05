@@ -1,13 +1,15 @@
 import asyncio
 import aiohttp
+import logging
 from nulsexplorer.web import app
 from nulsexplorer import model
 from nulsexplorer.model.blocks import get_last_block_height
 from nulsexplorer.model.transactions import Transaction
 
+LOGGER = logging.getLogger('connector')
+
 async def api_request(session, uri):
     base_uri = app['config'].nuls.base_uri.value
-    print(base_uri + uri)
     async with session.get(base_uri + uri) as resp:
         jres = await resp.json()
         if jres.get('success', False):
@@ -46,7 +48,7 @@ async def check_blocks():
     if last_stored_height is None:
         last_stored_height = -1
 
-    print(last_stored_height)
+    LOGGER.info("Last block is #%d" % last_stored_height)
     while True:
         async with aiohttp.ClientSession() as session:
             last_height = await request_last_height(session)
@@ -54,7 +56,7 @@ async def check_blocks():
             if last_height > last_stored_height:
                 for block_height in range(last_stored_height+1, last_height+1):
                     block = await request_block(session, height=block_height)
-                    print(block['height'])
+                    LOGGER.info("Synchronizing block #%d" % block['height'])
                     await store_block(block)
                     last_stored_height = block['height']
 
@@ -65,7 +67,8 @@ async def worker():
         try:
             await check_blocks()
         except:
-            print("ERROR, relaunching")
+            LOGGER.exception("ERROR, relagunching in 10 seconds")
+            await asyncio.sleep(10)
 
 def start_connector():
     loop = asyncio.get_event_loop()

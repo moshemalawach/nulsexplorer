@@ -78,7 +78,7 @@ def launch_explorer():
     handler = app.make_handler()
     f = loop.create_server(handler, host, port)
     srv = loop.run_until_complete(f)
-    print('serving on', srv.sockets[0].getsockname())
+    LOGGER.info('serving on %s', srv.sockets[0].getsockname())
     loop.run_forever()
     #run(app=app, quiet=False, server = 'aiobottle:AsyncServer',
     #    host=host, port=port)
