@@ -1,0 +1,46 @@
+{% macro transaction_detail(transaction) -%}
+<div class="card mb-3">
+  <div class="card-header">
+    <span class="float-right">
+      {{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}
+    </span>
+    <a href="/transactions/{{transaction.hash}}">
+      {{transaction.hash}}
+    </a>
+    <span class="badge badge-primary">{{TRANSACTION_TYPES[transaction.type]}}</span>
+  </div>
+  <div class="card-body">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          {% for input in transaction.inputs %}
+            <p>
+              {% if input.fromIndex < len(transaction.outputs) %}
+                <span class="float-right">{{input.value/100000000}}</span>
+                <a href="/addresses/{{transaction.outputs[input.fromIndex].address}}">
+                  {{transaction.outputs[input.fromIndex].address}}
+                </a>
+                {% else %}
+                 ❌ Error with transaction input
+                {% endif %}
+            </p>
+          {% endfor %}
+        </div>
+        <div class="col-1">
+          ➡️
+        </div>
+        <div class="col">
+          {% for output in transaction.outputs %}
+            <p>
+              <span class="float-right">{{output.value/100000000}}</span>
+              <a href="/addresses/{{output.address}}">
+                {{output.address}}
+              </a>
+            </p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{%- endmacro %}

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-
+{% from "macros.html" import transaction_detail with context %}
 {% block title %}Block Explorer{% endblock %}
 {% block content %}
 <h2>Block detail</h2>
@@ -21,7 +21,11 @@
         </tr>
         <tr>
           <td>Transaction fee</td>
-          <td class="text-right">{{block.fee}}</td>
+          <td class="text-right">{{block.fee/100000000}} NULS</td>
+        </tr>
+        <tr>
+          <td>Block Reward</td>
+          <td class="text-right">{{block.reward/100000000}} NULS
         </tr>
         <tr>
           <td>Producer</td>
@@ -74,44 +78,7 @@
 
 <h4>Transactions</h4>
 {% for transaction in block.txList %}
-  <div class="card mb-3">
-    <div class="card-header">
-      <span class="float-right">
-        {{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}
-      </span>
-      <a href="/transactions/{{transaction.hash}}">
-        {{transaction.hash}}
-      </a>
-    </div>
-    <div class="card-body">
-      <div class="container">
-        <div class="row">
-          <div class="col">
-            {% for input in transaction.inputs %}
-              <p>
-                <a href="/addresses/transaction.outputs[input.fromIndex].address">
-                  {{transaction.outputs[input.fromIndex].address}}
-                </a>
-              </p>
-            {% endfor %}
-          </div>
-          <div class="col-1">
-            ➡️
-          </div>
-          <div class="col">
-            {% for output in transaction.outputs %}
-              <p>
-                <span class="float-right">{{output.value}}</span>
-                <a href="/addresses/output.address">
-                  {{output.address}}
-                </a>
-              </p>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+  {{ transaction_detail(transaction) }}
 {% endfor %}
 
 <table class="table table-striped">
