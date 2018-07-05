@@ -116,7 +116,7 @@ async def view_address(request):
 
     transactions = []
     async for tx in Transaction.find({'$or':
-                [{'inputs.address': address},
+                [{'outputs.address': address},
                  {'inputs.address': address}]}, sort='time', sort_order=-1):
         transactions.append(tx)
 
