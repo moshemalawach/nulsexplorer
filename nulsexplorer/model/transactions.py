@@ -34,7 +34,7 @@ class Transaction(BaseClass):
                     ('outputs.%d.toIndex' % fidx): i
                 }})
             if source_tx is not None:
-                in_from = source_tx.outputs[inputdata['fromIndex']]
+                in_from = source_tx['outputs'][inputdata['fromIndex']]
                 inputdata['address'] = in_from['address']
             #     in_from['status'] = 3
             #     in_from['toHash'] = transaction.hash
