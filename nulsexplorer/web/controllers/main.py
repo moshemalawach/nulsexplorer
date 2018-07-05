@@ -50,9 +50,8 @@ class Pagination(object):
 async def index(request):
     """Index of the block explorer.
     """
-    last_blocks = []
-    async for block in Block.find({}, limit=10, sort=[('height', -1)]):
-        last_blocks.append(block)
+    last_blocks = [block async for block
+                   in Block.find({}, limit=10, sort=[('height', -1)])]
 
     return {'last_blocks': last_blocks,
             'last_height': await get_last_block_height()}
@@ -78,12 +77,12 @@ app.router.add_get('/blocks/{block_hash}', view_block)
 async def block_list(request):
     """ Blocks view
     """
-    blocks = []
+
     total_blocks = await Block.count()
     page = int(request.match_info.get('page', '1'))
-    async for block in Block.find({}, limit=PER_PAGE, skip=(page-1)*PER_PAGE,
-                                        sort=[('height', -1)]):
-        blocks.append(block)
+    blocks = [block async for block
+              in Block.find({}, limit=PER_PAGE, skip=(page-1)*PER_PAGE,
+                            sort=[('height', -1)])]
 
     pagination = Pagination(page, PER_PAGE, total_blocks)
 
@@ -114,11 +113,9 @@ async def view_address(request):
     """
     address = request.match_info['address']
 
-    transactions = []
-    async for tx in Transaction.find({'$or':
-                [{'outputs.address': address},
-                 {'inputs.address': address}]}, sort='time', sort_order=-1):
-        transactions.append(tx)
+    transactions = [tx async for tx in Transaction.find({'$or':
+                    [{'outputs.address': address},
+                     {'inputs.address': address}]}, sort='time', sort_order=-1)]
 
     return {'address': address,
             'transactions': transactions,
