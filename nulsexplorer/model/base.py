@@ -5,7 +5,6 @@ import logging
 
 LOGGER = logging.getLogger(__name__)
 
-
 class Index(object):
     def __init__(self, *args, **kwargs):
         self._args = args
@@ -104,8 +103,8 @@ class BaseClass(SerializerObject):
         return db[self._collection_name]
 
     @classproperty
-    def collection(self, db):
-        return self.get_collection()
+    def collection(self):
+        return self.get_collection(self)
 
     @classmethod
     async def find_one(cls, **kwargs):
@@ -134,7 +133,7 @@ class BaseClass(SerializerObject):
 
     @classmethod
     async def find(cls, *args, sort=None, sort_order=pymongo.ASCENDING, skip=None, limit=None, **kwargs):
-        cursor = cls._prepare_find(cls.async_collection, *args, sort=sort,
+        cursor = cls._prepare_find(cls.collection, *args, sort=sort,
                                    sort_order=sort_order, skip=skip,
                                    limit=limit, **kwargs)
 

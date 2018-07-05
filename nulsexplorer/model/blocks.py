@@ -1,6 +1,6 @@
 from nulsexplorer import model
 from nulsexplorer.model.base import BaseClass, Index
-from nulsexplorer.model.transaction import Transaction
+from nulsexplorer.model.transactions import Transaction
 import pymongo
 
 async def store_block(block_data):
