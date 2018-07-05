@@ -34,6 +34,7 @@ env.globals.update({
     'timedelta': timedelta,
     'int': int,
     'float': float,
+    'len': len,
     'TRANSACTION_TYPES': TRANSACTION_TYPES
 })
 
