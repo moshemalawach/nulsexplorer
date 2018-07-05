@@ -21,8 +21,9 @@
                   <a href="/addresses/{{input.address}}">
                     {{input.address}}
                   </a><br/>
-                  <a href="/transactions/{{input.fromHash}}#output{{input.fromIndex}}">
-                    ({{input.fromHash}})
+                  <a href="/transactions/{{input.fromHash}}#output{{input.fromIndex}}"
+                     title="{{input.fromHash}}">
+                    ⛓
                   </a>
                 {% else %}
                  ❌ Error with transaction input
