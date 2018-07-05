@@ -2,12 +2,30 @@ from nulsexplorer import model
 from nulsexplorer.model.base import BaseClass, Index
 from nulsexplorer.model.transactions import Transaction
 import pymongo
+import logging
+import operator
+LOGGER = logging.getLogger('model.blocks')
 
 async def store_block(block_data):
     txs = block_data.pop("txList")
+    itxs = dict(zip(map(operator.itemgetter("hash"), txs), txs))
+
     if len(txs):
-        for transaction in txs:
-            await Transaction.input_txdata(transaction)
+        #for transaction in txs:
+        #    await Transaction.input_txdata(transaction)
+        try:
+            ntxs = list()
+            for transaction in txs:
+                ntxs.append(
+                    await Transaction.input_txdata(transaction, batch_mode=True,
+                                                   batch_transactions=itxs)
+                    )
+            await model.db.transactions.insert_many(txs)
+        except:
+            LOGGER.exception("woops")
+            for transaction in txs:
+                await Transaction.input_txdata(transaction)
+
     doc_id = await model.db.blocks.insert_one(block_data)
         # for now we forget about bulk insert as we have to do some work on it...
         # await model.db.transactions.insert_many(txs)
