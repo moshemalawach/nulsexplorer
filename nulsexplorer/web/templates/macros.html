@@ -9,7 +9,7 @@
     </a>
     <span class="badge badge-primary">{{TRANSACTION_TYPES[transaction.type]}}</span>
   </div>
-  {% if len(transaction.outputs) or len(transaction.inputs) %}
+  {% if (len(transaction.outputs) or len(transaction.inputs)) %}
     <div class="card-body">
       <div class="container-fluid">
         <div class="row">
@@ -42,6 +42,21 @@
                 <a href="/addresses/{{output.address}}">
                   {{output.address}}
                 </a>
+                {% if ((output.lockTime == -1) or (output.lockTime > 10000)) %}
+                <span class="badge badge-warning">
+                  locked
+                  {% if output.lockTime == -1 %}
+                   consensus
+                  {% elif output.lockTime > 10000 %}
+                   until {{datetime.fromtimestamp(int((transaction.time+output.lockTime)/1000)).strftime('%Y-%m-%d %H:%M:%S')}}
+                  {% endif %}
+                </span>
+                {% endif %}
+                {% if output.toHash %}
+                  <a href="/transactions/{{output.toHash}}">
+                     <span class="badge badge-secondary">spent ⛓</span>
+                   </a>
+                {% endif %}
               </p>
             {% endfor %}
           </div>

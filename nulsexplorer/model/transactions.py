@@ -58,7 +58,7 @@ class Transaction(BaseClass):
         for outputdata in transaction['outputs']:
             if 'status' not in outputdata:
                 if outputdata.get("lockTime", -1) > -1:
-                    outputdata['status'] = 3 # how to know between 2 and 3 ?
+                    outputdata['status'] = 2 # how to know between 1 and 2 ?
                 else:
                     outputdata['status'] = 0
         if batch_mode:
