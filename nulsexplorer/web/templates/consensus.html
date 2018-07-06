@@ -6,15 +6,26 @@
 <div class="container-fluid">
   <div class="row">
     {% for agent in consensus.agents %}
-    <div class="col-md-6 col-lg-3">
-      <div class="card" style="margin-bottom: 2rem;">
-        <div class="card-body">
-          <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
-            {{('stopped', 'running')[agent.status]}}
-          </span>
-          <h5 class="card-title">
+    {% if agent.status or (agent.creditVal != 0) %}
+      {% if agent.creditVal < -0.5 %}
+        {% set cardclass = 'danger' %}
+      {% elif agent.creditVal < 0.5 %}
+        {% set cardclass = 'warning' %}
+      {% else %}
+        {% set cardclass = 'success' %}
+      {% endif %}
+    {% else %}
+      {% set cardclass = 'light' %}
+    {% endif %}
+    <div class="col-md-6 col-lg-3 col-xl-2">
+      <div class="card mb-4  bg-{{cardclass}}">
+        <div class="card-header">
+            <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
+              {{('stopped', 'running')[agent.status]}}
+            </span>
             {{agent.agentId}}
-          </h5>
+        </div>
+        <div class="card-body">
           <p class="card-text">
             {{agent.agentName or ''}}<br />
 
