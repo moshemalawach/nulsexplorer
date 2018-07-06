@@ -2,8 +2,10 @@
 
 {% block title %}Consensus Status{% endblock %}
 {% block content %}
-<h2>Agents <span class="float-right"> Block #{{consensus.height}}</span></h2>
-<div class="container-fluid">
+<div class="container">
+  <h2 class="d-flex justify-content-between align-items-center">
+    Agents <span> Block #{{consensus.height}}</span>
+  </h2>
   <div class="row">
     {% for agent in consensus.agents %}
     {% if agent.status or (agent.creditVal != 0) %}
@@ -21,8 +23,8 @@
       {% set cardclass = 'bg-light' %}
       {% set progressclass = 'bg-primary' %}
     {% endif %}
-    <div class="col-md-6 col-lg-3 col-xl-2">
-      <div class="card mb-4 {{cardclass}}">
+    <div class="col-md-6 col-lg-4">
+      <div class="card mb-5 mx-2 {{cardclass}}">
         <div class="card-header">
             <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
               {{('stopped', 'running')[agent.status]}}
@@ -36,7 +38,11 @@
             <ul class="list-group list-group-flush text-dark" style="font-size:.8rem;">
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 Address:
-                <span class="d-inline-block text-truncate">{{agent.agentName or agent.agentAddress}}</span>
+                <span class="d-inline-block text-truncate">
+                  <a href="/addresses/{{agent.agentAddress}}">
+                    {{agent.agentName or agent.agentAddress}}
+                  </a>
+                </span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 Commission:
