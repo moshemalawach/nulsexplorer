@@ -5,6 +5,7 @@ from nulsexplorer.web import app
 from nulsexplorer import model
 from nulsexplorer.model.blocks import get_last_block_height, store_block
 from nulsexplorer.model.transactions import Transaction
+from nulsexplorer.model.consensus import Consensus
 
 LOGGER = logging.getLogger('connector')
 
@@ -36,6 +37,9 @@ async def request_block(session, height=None, hash=None):
 
     return resp
 
+async def request_consensus(session):
+    resp = await api_request(session, 'consensus/agent/list?pageSize=100')
+    return resp['list']
 
 async def check_blocks():
     last_stored_height = await get_last_block_height()
@@ -49,6 +53,13 @@ async def check_blocks():
             last_height = await request_last_height(session)
 
             if last_height > last_stored_height:
+                consensus_nodes = await request_consensus(session)
+                await Consensus.collection.replace_one(
+                    {'height': last_height},
+                    {'height': last_height,
+                     'agents': consensus_nodes},
+                     upsert=True)
+
                 for block_height in range(last_stored_height+1, last_height+1):
                     block = await request_block(session, height=block_height)
                     LOGGER.info("Synchronizing block #%d" % block['height'])

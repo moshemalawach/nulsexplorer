@@ -26,12 +26,16 @@
 </head>
 <body>
     {% block header %}
-    <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-accent-2 text-white">
-      <h5 class="my-0 mr-md-auto font-weight-normal">NULS Explorer</h5>
+    <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 text-white" style="background: #000;">
+      <img class="logo logo-dark" alt="NULS" style="margin: -1rem 1rem -1rem 0; max-height: 3rem;" src="/static/img/nuls1-small.png">
+      <h5 class="my-0 mr-md-auto font-weight-normal">
+        NULS Explorer
+      </h5>
+
       <nav class="my-2 my-md-0 mr-md-3">
         <a class="p-2 text-white" href="/">Home</a>
-        <a class="p-2 text-white" href="/blocks">Blocks</a>
-        <a class="p-2 text-white" href="/accounts">Accounts</a>
+        <a class="p-2 text-white" href="/blocks">📦 Blocks</a>
+        <a class="p-2 text-white" href="/consensus">🖧 Consensus</a>
       </nav>
     </div>
     {% endblock %}

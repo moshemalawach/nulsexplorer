@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Consensus Status{% endblock %}
+{% block content %}
+<h2>Agents <span class="float-right"> Block #{{consensus.height}}</span></h2>
+<div class="container-fluid">
+  <div class="row">
+    {% for agent in consensus.agents %}
+    <div class="col-md-6 col-lg-3">
+      <div class="card" style="margin-bottom: 2rem;">
+        <div class="card-body">
+          <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
+            {{('stopped', 'running')[agent.status]}}
+          </span>
+          <h5 class="card-title">
+            {{agent.agentId}}
+          </h5>
+          <p class="card-text">
+            {{agent.agentName or ''}}<br />
+
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

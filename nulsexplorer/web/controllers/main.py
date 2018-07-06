@@ -4,6 +4,7 @@ import aiohttp_jinja2
 from aiohttp import web
 from math import ceil
 from nulsexplorer.web import app
+from nulsexplorer.model.consensus import Consensus
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
@@ -121,3 +122,14 @@ async def view_address(request):
             'transactions': transactions,
             'last_height': await get_last_block_height()}
 app.router.add_get('/addresses/{address}', view_address)
+
+@aiohttp_jinja2.template('consensus.html')
+async def consensus(request):
+    """ Address view
+    """
+    last_height = await get_last_block_height()
+    consensus = await Consensus.collection.find_one(sort=[('height', -1)])
+
+    return {'consensus': consensus,
+            'last_height': last_height}
+app.router.add_get('/consensus', consensus)
