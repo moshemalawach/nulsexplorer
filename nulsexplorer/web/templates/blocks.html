@@ -3,8 +3,10 @@
 
 {% block title %}Block Explorer{% endblock %}
 {% block content %}
-{{paginate(pagination, "/blocks/page/", ulclass="float-right pagination-sm")}}
-<h2>Blocks</h2>
+<div class="d-md-flex justify-content-between">
+  <h2>Blocks</h2>
+    {{paginate(pagination, "/blocks/page/", ulclass="pagination-sm")}}
+</div>
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
@@ -29,5 +31,5 @@
     {% endfor %}
   </tbody>
 </table>
-{{paginate(pagination, "/blocks/page/", ulclass="float-right  pagination-sm")}}
+{{paginate(pagination, "/blocks/page/",  ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
 {% endblock %}

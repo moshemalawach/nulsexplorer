@@ -67,8 +67,8 @@
 </div>
 {%- endmacro %}
 
-{% macro paginate(pagination, base_url, ulclass="") -%}
-<nav aria-label="Navigation">
+{% macro paginate(pagination, base_url, ulclass="", navclass="") -%}
+<nav aria-label="Navigation" class="{{navclass}}">
   <ul class="pagination {{ulclass}}">
     {% if pagination.has_prev %}
       <li class="page-item">
