@@ -33,6 +33,10 @@ def launch_explorer():
     if args.config_file is not None:
         app['config'].yaml.load(args.config_file)
 
+    from nulsexplorer.web.controllers.errors import setup_middlewares
+    setup_middlewares(app)
+
+
     log_level = logging.INFO
     if args.debug:
         log_level = logging.DEBUG
