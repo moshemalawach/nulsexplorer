@@ -30,18 +30,29 @@ async def view_address(request):
     """ Address view
     """
     address = request.match_info['address']
-
-    transactions = [tx async for tx in Transaction.find({'$or':
+    page = int(request.match_info.get('page', '1'))
+    where_query = {'$or':
                     [{'outputs.address': address},
-                     {'inputs.address': address}]}, sort='time', sort_order=-1)]
+                     {'inputs.address': address}]}
+    tx_count = await Transaction.count(where_query)
+
+    transactions = [tx async for tx in Transaction.find(where_query,
+                                                        sort='time',
+                                                        sort_order=-1,
+                                                        limit=PER_PAGE,
+                                                        skip=(page-1)*PER_PAGE)]
     # reusing data from cache here... maybe we should do a search here too ?
     unspent_info = (await addresses_unspent_info()).get(address, {})
 
+    pagination = Pagination(page, PER_PAGE, tx_count)
+
     return {'address': address,
             'transactions': transactions,
+            'pagination': pagination,
             'unspent_info': unspent_info,
             'last_height': await get_last_block_height()}
 app.router.add_get('/addresses/{address}', view_address)
+app.router.add_get('/addresses/{address}/page/{page}', view_address)
 
 @aiohttp_jinja2.template('addresses.html')
 async def address_list(request):
