@@ -62,7 +62,7 @@ app.router.add_get('/', index)
 async def search(request):
     """ Search view
     """
-    query = request.query.get('q', '')
+    query = request.query.get('q', '').strip()
     if (await Block.count({'hash': query})):
         raise web.HTTPFound('/blocks/%s' % query)
     elif (await Transaction.count({'hash': query})):
