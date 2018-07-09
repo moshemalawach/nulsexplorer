@@ -19,7 +19,8 @@ class Transaction(BaseClass):
                Index("blockHeight", pymongo.DESCENDING),
                Index("time", pymongo.DESCENDING),
                Index("outputs.address"),
-               Index("inputs.address")]
+               Index("inputs.address"),
+               Index("outputs.status")]
 
     @classmethod
     async def input_txdata(cls, tx_data, batch_mode=False,

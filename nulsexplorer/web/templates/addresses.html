@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "macros.html" import paginate with context %}
+
+{% block title %}Addresses{% endblock %}
+{% block content %}
+{{paginate(pagination, "/addresses/page/", ulclass="float-right pagination-sm")}}
+<h2>Addresses</h2>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Hash</th>
+      <th scope="col">Unspent TXs</th>
+      <th scope="col">Balance (including locked)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for address in addresses %}
+    <tr>
+      <th scope="row">
+        <a href="/addresses/{{address._id}}">
+          {{address._id}}
+        </a>
+      </th>
+      <td>{{address.unspent_count}}</td>
+      <td>{{address.unspent_value/100000000}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{{paginate(pagination, "/blocks/page/", ulclass="float-right  pagination-sm")}}
+{% endblock %}

@@ -4,6 +4,33 @@
 {% block content %}
 <h2>Address detail</h2>
 <h3>{{address}}</h3>
+<div class="row">
+  <div class="col-sm">
+    <table class="table table-sm table-striped">
+      <tbody>
+        <tr>
+          <th scope="col" colspan="2">Summary</th>
+        </tr>
+        <tr>
+          <td>Hash</td>
+          <td class="text-right">{{address}}</td>
+        </tr>
+        <tr>
+          <td>TX count</td>
+          <td class="text-right">{{len(transactions)}} NULS</td>
+        </tr>
+        <tr>
+          <td>Unspent TX</td>
+          <td class="text-right">{{unspent_info.unspent_count}}</td>
+        </tr>
+        <tr>
+          <td>Balance (including locked)</td>
+          <td class="text-right">{{unspent_info.unspent_value/100000000}}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 <h4>Transactions</h4>
 {% for transaction in transactions %}
   {{ transaction_detail(transaction) }}
