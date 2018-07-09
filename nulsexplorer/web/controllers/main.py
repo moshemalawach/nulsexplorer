@@ -58,6 +58,25 @@ async def index(request):
             'last_height': await get_last_block_height()}
 app.router.add_get('/', index)
 
+#@aiohttp_jinja2.template('search.html')
+async def search(request):
+    """ Search view
+    """
+    query = request.query.get('q', '')
+    if (await Block.count({'hash': query})):
+        raise web.HTTPFound('/blocks/%s' % query)
+    elif (await Transaction.count({'hash': query})):
+        raise web.HTTPFound('/transactions/%s' % query)
+    elif (await Transaction.count({'$or':
+                    [{'outputs.address': query},
+                     {'inputs.address': query}]})):
+        raise web.HTTPFound('/addresses/%s' % query)
+    else:
+        raise web.HTTPNotFound(text="Nothing found for that search")
+
+    #return {'last_height': await get_last_block_height()}
+app.router.add_get('/search', search)
+
 @aiohttp_jinja2.template('block.html')
 async def view_block(request):
     """ Block view

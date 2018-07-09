@@ -28,15 +28,23 @@
     {% block header %}
     <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 text-white" style="background: #000;">
       <img class="logo logo-dark" alt="NULS" style="margin: -1rem 1rem -1rem 0; max-height: 3rem;" src="/static/img/nuls1-small.png">
-      <h5 class="my-0 mr-md-auto font-weight-normal">
-        NULS Explorer
+      <h5 class="my-0 mr-md-6 font-weight-normal">
+        <a class="p-2 text-white" href="/">
+          NULS Explorer
+        </a>
       </h5>
 
-      <nav class="my-2 my-md-0 mr-md-3">
-        <a class="p-2 text-white" href="/">Home</a>
+      <nav class="my-2 mr-md-auto my-md-0">
         <a class="p-2 text-white" href="/blocks">📦 Blocks</a>
         <a class="p-2 text-white" href="/consensus">📋 Consensus</a>
       </nav>
+
+      <form class="form-inline input-group form-inline col-md-4" action="/search" method="GET">
+        <input class="form-control" type="search" placeholder="Address/Block/TX..." aria-label="Search" name="q">
+        <div class="input-group-append">
+          <button class="btn btn-outline-success my-0 input-group-append" type="submit" title="Search">Search</button>
+        </div>
+      </form>
     </div>
     {% endblock %}
     <div class="container-fluid">
