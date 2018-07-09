@@ -50,10 +50,14 @@ async def consensus(request):
     ])
     totals_day = {r['_id']: r['count'] async for r in totals}
     #db.blocks.aggregate({$match: {'height': {'$gt': 40000}}},     )
+    node_count = len(consensus['agents'])
+    active_count = len([a for a in consensus['agents'] if a['status'] == 1])
 
     return {'consensus': consensus,
             'last_height': last_height,
             'total_all': totals_all,
             'total_hour': totals_hour,
-            'total_day': totals_day}
+            'total_day': totals_day,
+            'node_count': node_count,
+            'active_count': active_count}
 app.router.add_get('/consensus', consensus)
