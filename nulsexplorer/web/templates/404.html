@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% from "macros.html" import transaction_detail with context %}
+{% block title %}Not found{% endblock %}
+{% block content %}
+<div class="text-center">
+  <h2>Page not found<h2>
+  <h3>{{reason}}</h3>
+</div>
+{% endblock %}
