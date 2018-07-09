@@ -31,15 +31,15 @@ async def store_block(block_data):
         # await model.db.transactions.insert_many(txs)
     return doc_id
 
-async def get_last_block():
-    query = model.db.blocks.find().sort([('height', -1)]).limit(1)
+async def get_last_block(projection=None):
+    query = model.db.blocks.find(projection=projection).sort([('height', -1)]).limit(1)
     if await query.fetch_next:
         return query.next_object()
     else:
         return None
 
 async def get_last_block_height():
-    block = await get_last_block()
+    block = await get_last_block(projection={'height': 1})
     if block is not None:
         return block['height']
     else:
