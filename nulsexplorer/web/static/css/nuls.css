@@ -1,0 +1,20 @@
+body{
+  font-family: 'Open Sans', sans-serif;
+}
+
+.nuls-blue {
+    background-image: linear-gradient(-133deg, #002e5e 0%, #092243 89%, #0a2140 100%);
+    -webkit-box-shadow: 0 16px 64px 0 rgba(0, 0, 0, 0.24);
+    box-shadow: 0 16px 64px 0 rgba(0, 0, 0, 0.24);
+    border-radius: 8px;
+    padding: 50px 85px;
+    color: #fff;
+}
+
+h1, h2, h3, h4, h5, h6, th {
+  font-family: 'Asap', sans-serif;
+}
+
+.header {
+  background-image: linear-gradient(-133deg, #002e5e 0%, #092243 89%, #0a2140 100%);
+}
