@@ -18,3 +18,12 @@ h1, h2, h3, h4, h5, h6, th {
 .header {
   background-image: linear-gradient(-133deg, #002e5e 0%, #092243 89%, #0a2140 100%);
 }
+
+.header form input {
+  background: rgba(255,255,255,.3);
+  color: #fff;
+}
+
+.header form input::placeholder {
+  color: #bbb;
+}
