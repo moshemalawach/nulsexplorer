@@ -8,7 +8,7 @@ from aiocache import cached, SimpleMemoryCache
 
 # WARNING: we are storing this in memory... memcached or similar would be better
 #          if volume starts to be too big.
-@cached(ttl=60*60, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
+@cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def addresses_unspent_txs():
     aggregate = Transaction.collection.aggregate([
         {'$unwind': '$outputs'}, {'$match': {'outputs.status': {'$lt': 3}}},
@@ -19,7 +19,7 @@ async def addresses_unspent_txs():
     ])
     return [item async for item in aggregate]
 
-@cached(ttl=60*60, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
+@cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def addresses_unspent_info():
     unspent_info = await addresses_unspent_txs()
     return {info['_id']: info
