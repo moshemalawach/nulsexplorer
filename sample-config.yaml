@@ -7,8 +7,8 @@ nuls:
   host: 127.0.0.1
   port: 6001
   path: /api/
-  base_uri: "http://127.0.0.1:8001/api/"
+  base_uri: "http://127.0.0.1:6001/api/"
 
 mongodb:
   uri: "mongodb://127.0.0.1"
-  database: nuls
+  database: nulsmain
