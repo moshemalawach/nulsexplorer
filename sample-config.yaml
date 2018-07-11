@@ -5,7 +5,7 @@ explorer:
 
 nuls:
   host: 127.0.0.1
-  port: 8001
+  port: 6001
   path: /api/
   base_uri: "http://127.0.0.1:8001/api/"
 
