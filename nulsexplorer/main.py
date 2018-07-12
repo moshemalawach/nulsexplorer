@@ -66,6 +66,8 @@ async def check_blocks():
                     await store_block(block)
                     last_stored_height = block['height']
 
+                await Transaction.update_locks(last_height)
+
         await asyncio.sleep(8)
 
 async def worker():

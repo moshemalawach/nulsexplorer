@@ -23,6 +23,17 @@ class Transaction(BaseClass):
                Index("outputs.status")]
 
     @classmethod
+    async def update_locks(cls, block_height):
+        """ Sets all unspent locked outputs with a lock time in the past to unlocked.
+        """
+        LOGGER.info("Unlocking transaction on block %d" % block_height)
+        await cls.collection.update_many(
+            {'$and': [
+                {'outputs.status': 2},
+                {'outputs.lockTime': {'$lt': 13852}}]},
+            {'$set': {"outputs.$[].status": 0}})
+
+    @classmethod
     async def input_txdata(cls, tx_data, batch_mode=False,
                            batch_transactions=None):
         #await cls.collection.insert(tx_data)
