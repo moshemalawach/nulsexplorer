@@ -51,7 +51,7 @@
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 Bond:
-                <span class="d-inline-block text-truncate">{{agent.deposit/100000000}}</span>
+                <span class="d-inline-block text-truncate">{{"%0.2f" % (agent.deposit/100000000)}} <i class="nuls"></i></span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 Participants:
@@ -59,7 +59,7 @@
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 Amount:
-                <span class="d-inline-block text-truncate">{{agent.totalDeposit/100000000}}</span>
+                <span class="d-inline-block text-truncate">{{"%0.2f" % (agent.totalDeposit/100000000)}} <i class="nuls"></i></span>
               </li>
               <li class="list-group-item d-flex justify-content-between align-items-center">
                 Blocks packed all time:

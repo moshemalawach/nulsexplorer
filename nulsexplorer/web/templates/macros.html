@@ -17,7 +17,7 @@
             {% for input in transaction.inputs %}
               <p>
                 {% if input.address %}
-                  <span class="float-right">{{input.value/100000000}}</span>
+                  <span class="float-right">{{input.value/100000000}} <i class="nuls"></i></span>
                   <a href="/addresses/{{input.address}}">
                     {{input.address}}
                   </a>
@@ -38,7 +38,7 @@
           <div class="col-5">
             {% for output in transaction.outputs %}
               <p>
-                <span class="float-right">{{output.value/100000000}}</span>
+                <span class="float-right">{{output.value/100000000}} <i class="nuls"></i></span>
                 <a href="/addresses/{{output.address}}">
                   {{output.address}}
                 </a>

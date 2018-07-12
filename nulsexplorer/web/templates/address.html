@@ -26,19 +26,19 @@
         </tr>
         <tr>
           <td>Balance (including locked)</td>
-          <td class="text-right">{{"%0.4f" % (unspent_info.unspent_value/100000000)}} NULS</td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.unspent_value/100000000)}} <i class="nuls"></i></td>
         </tr>
         <tr>
           <td>Locked balance</td>
-          <td class="text-right">{{"%0.4f" % ((unspent_info.time_locked_value+unspent_info.consensus_locked_value)/100000000)}} NULS</td>
+          <td class="text-right">{{"%0.4f" % ((unspent_info.time_locked_value+unspent_info.consensus_locked_value)/100000000)}} <i class="nuls"></i></td>
         </tr>
         <tr>
           <td>Time locked balance</td>
-          <td class="text-right">{{"%0.4f" % (unspent_info.time_locked_value/100000000)}} NULS</td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.time_locked_value/100000000)}} <i class="nuls"></i></td>
         </tr>
         <tr>
           <td>Consensus locked balance</td>
-          <td class="text-right">{{"%0.4f" % ((unspent_info.consensus_locked_value)/100000000)}} NULS</td>
+          <td class="text-right">{{"%0.4f" % ((unspent_info.consensus_locked_value)/100000000)}} <i class="nuls"></i></td>
         </tr>
       </tbody>
     </table>

@@ -27,3 +27,13 @@ h1, h2, h3, h4, h5, h6, th {
 .header form input::placeholder {
   color: #bbb;
 }
+
+i.nuls {
+  display: inline-block;
+  height: 1em;
+  width: 0.6em;
+  background: url(../img/logo.png);
+  background-size: contain;
+  background-position: center bottom;
+  background-repeat: no-repeat;
+}
