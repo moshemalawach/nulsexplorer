@@ -30,6 +30,7 @@ class Transaction(BaseClass):
         await cls.collection.update_many(
             {'$and': [
                 {'outputs.status': 2},
+                {'outputs.lockTime': {'$gt': 0},
                 {'outputs.lockTime': {'$lt': 13852}}]},
             {'$set': {"outputs.$[].status": 0}})
 
