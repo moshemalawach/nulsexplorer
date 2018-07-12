@@ -30,10 +30,15 @@ h1, h2, h3, h4, h5, h6, th {
 
 i.nuls {
   display: inline-block;
-  height: 1em;
-  width: 0.6em;
+  height: 0.8em;
+  width: 0.5em;
   background: url(../img/logo.png);
   background-size: contain;
   background-position: center bottom;
   background-repeat: no-repeat;
+  filter: grayscale(100%) contrast(160%) brightness(0.1);
+}
+
+i.nuls:hover {
+  filter: none;
 }
