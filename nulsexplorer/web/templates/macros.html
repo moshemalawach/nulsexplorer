@@ -47,8 +47,10 @@
                   locked
                   {% if output.lockTime == -1 %}
                    consensus
-                  {% elif output.lockTime > last_height %}
+                  {% elif (output.lockTime > last_height) and (output.lockTime < 1000000000000) %}
                    until {{(datetime.now() + timedelta(seconds=10*(output.lockTime-last_height))).strftime('%Y-%m-%d %H:%M')}}
+                  {% elif (output.lockTime > 1000000000000) %}
+                    until {{datetime.fromtimestamp(int(output.lockTime/1000)).strftime('%Y-%m-%d')}}
                   {% endif %}
                 </span>
                 {% endif %}
