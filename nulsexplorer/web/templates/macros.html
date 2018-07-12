@@ -42,13 +42,13 @@
                 <a href="/addresses/{{output.address}}">
                   {{output.address}}
                 </a>
-                {% if ((output.lockTime == -1) or (output.lockTime > 10000)) %}
+                {% if ((output.lockTime == -1) or (output.lockTime > last_height)) %}
                 <span class="badge badge-warning">
                   locked
                   {% if output.lockTime == -1 %}
                    consensus
-                  {% elif output.lockTime > 10000 %}
-                   until {{datetime.fromtimestamp(int((transaction.time+output.lockTime)/1000)).strftime('%Y-%m-%d %H:%M:%S')}}
+                  {% elif output.lockTime > last_height %}
+                   until {{(datetime.now() + timedelta(seconds=10*(output.lockTime-last_height))).strftime('%Y-%m-%d %H:%M')}}
                   {% endif %}
                 </span>
                 {% endif %}
