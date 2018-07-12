@@ -56,10 +56,10 @@
     <a class="nav-link{{(mode == 'detail') and ' active' or ''}}" href="/addresses/{{address}}/detail">Detail</a>
   </li>
 </ul>
+{% if pagination.pages > 1 %}
+{{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse tabbed-pagination")}}
+{% endif %}
 {% if mode in ["summary", "full-summary"] %}
-  {% if pagination.pages > 1 %}
-  {{paginate(pagination, "/addresses/%s/page/" % address, ulclass="pagination-sm", navclass="d-flex flex-row-reverse tabbed-pagination")}}
-  {% endif %}
 <table class="table table-responsive-md">
   <thead>
     <tr>
@@ -104,18 +104,12 @@
     {% endfor %}
   </tbody>
 </table>
-{% if pagination.pages > 1 %}
-{{paginate(pagination, "/addresses/%s/page/" % address, ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
-{% endif %}
 {% elif mode == "detail" %}
-  {% if pagination.pages > 1 %}
-  {{paginate(pagination, "/addresses/%s/detail/page/" % address, ulclass="pagination-sm", navclass="d-flex flex-row-reverse tabbed-pagination")}}
-  {% endif %}
   {% for transaction in transactions %}
     {{ transaction_detail(transaction) }}
   {% endfor %}
-  {% if pagination.pages > 1 %}
-  {{paginate(pagination, "/addresses/%s/detail/page/" % address, ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
-  {% endif %}
+{% endif %}
+{% if pagination.pages > 1 %}
+{{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
 {% endif %}
 {% endblock %}

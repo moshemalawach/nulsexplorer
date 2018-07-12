@@ -62,6 +62,6 @@ a.address, span.address {
 
 @media screen and (min-width: 640px) {
   .tabbed-pagination ul {
-    margin-top: -2.2em;
+    margin-top: -2.8em;
   }
 }
