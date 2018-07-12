@@ -9,6 +9,7 @@ from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
 import pkg_resources
 
+import time
 import json
 from bson import json_util
 
@@ -31,6 +32,7 @@ env.globals.update({
     'app': app,
     'date': date,
     'datetime': datetime,
+    'time': time,
     'timedelta': timedelta,
     'int': int,
     'float': float,
