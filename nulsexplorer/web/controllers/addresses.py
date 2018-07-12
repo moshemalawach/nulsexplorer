@@ -16,6 +16,14 @@ async def addresses_unspent_txs():
                     'unspent_count': {'$sum': 1},
                     'unspent_value': {'$sum': '$outputs.value'},
                     'locked_value': {'$sum': {"$cond": [
+                        {"$in": [
+                            "$outputs.status",
+                            [1, 2]
+                        ]},
+                        "$outputs.value",
+                        0
+                    ]}},
+                    'consensus_locked_value': {'$sum': {"$cond": [
                         {"$eq": [
                             "$outputs.status",
                             2
@@ -25,9 +33,9 @@ async def addresses_unspent_txs():
                     ]}},
                     'time_locked_value': {'$sum': {"$cond": [
                         {"$and": [
-                            {"$eq": [
+                            {"$in": [
                                 "$outputs.status",
-                                2
+                                [1, 2]
                             ]},
                             {"$gt": [
                                 "$outputs.lockTime",
@@ -36,7 +44,8 @@ async def addresses_unspent_txs():
                         ]},
                         "$outputs.value",
                         0
-                    ]}}}},
+                    ]}}
+                    }},
         {'$sort': {'unspent_value': -1}}
     ])
     return [item async for item in aggregate]

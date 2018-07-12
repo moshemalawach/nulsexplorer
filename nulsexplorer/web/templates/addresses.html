@@ -20,15 +20,15 @@
     {% for address in addresses %}
     <tr>
       <th scope="row">
-        {{loop.index}}
+        {{loop.index + ((pagination.page - 1) * pagination.per_page)}}
       </th>
       <td>
         <a href="/addresses/{{address._id}}">
           {{address._id}}
         </a>
       </th>
-      <td class="text-right">{{"%0.2f" % (address.locked_value/1000000000)}}</td>
-      <td class="text-right">{{"%0.2f" % (address.unspent_value/1000000000)}}</td>
+      <td class="text-right">{{"%0.2f" % (address.locked_value/100000000)}}</td>
+      <td class="text-right">{{"%0.2f" % (address.unspent_value/100000000)}}</td>
     </tr>
     {% endfor %}
   </tbody>

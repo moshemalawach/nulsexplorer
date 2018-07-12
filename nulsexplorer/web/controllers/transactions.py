@@ -2,6 +2,7 @@ import aiohttp_jinja2
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (get_last_block_height, find_block)
+from .utils import Pagination, PER_PAGE
 
 @aiohttp_jinja2.template('transaction.html')
 async def view_transaction(request):

@@ -29,9 +29,9 @@ class Transaction(BaseClass):
         LOGGER.info("Unlocking transaction on block %d" % block_height)
         await cls.collection.update_many(
             {'$and': [
-                {'outputs.status': 2},
-                {'outputs.lockTime': {'$gt': 0}},
-                {'outputs.lockTime': {'$lt': 13852}}]},
+                {'outputs.status': 1},
+                {'outputs.lockTime': {'$lt': block_height}},
+                {'outputs.lockTime': {'$ne': -1}}]},
             {'$set': {"outputs.$[].status": 0}})
 
     @classmethod
@@ -70,8 +70,11 @@ class Transaction(BaseClass):
 
         for outputdata in transaction['outputs']:
             if 'status' not in outputdata:
-                if outputdata.get("lockTime", -1) > -1:
-                    outputdata['status'] = 2 # how to know between 1 and 2 ?
+                lockTime = outputdata.get("lockTime", 0)
+                if lockTime > 0:
+                    outputdata['status'] = 1
+                elif lockTime == -1:
+                    outputdata['status'] = 2
                 else:
                     outputdata['status'] = 0
         if batch_mode:
