@@ -14,7 +14,29 @@ async def addresses_unspent_txs():
         {'$unwind': '$outputs'}, {'$match': {'outputs.status': {'$lt': 3}}},
         {'$group': {'_id': '$outputs.address',
                     'unspent_count': {'$sum': 1},
-                    'unspent_value': {'$sum': '$outputs.value'}}},
+                    'unspent_value': {'$sum': '$outputs.value'},
+                    'locked_value': {'$sum': {"$cond": [
+                        {"$eq": [
+                            "$outputs.status",
+                            2
+                        ]},
+                        "$outputs.value",
+                        0
+                    ]}},
+                    'time_locked_value': {'$sum': {"$cond": [
+                        {"$and": [
+                            {"$eq": [
+                                "$outputs.status",
+                                2
+                            ]},
+                            {"$gt": [
+                                "$outputs.lockTime",
+                                0
+                            ]}
+                        ]},
+                        "$outputs.value",
+                        0
+                    ]}}}},
         {'$sort': {'unspent_value': -1}}
     ])
     return [item async for item in aggregate]
