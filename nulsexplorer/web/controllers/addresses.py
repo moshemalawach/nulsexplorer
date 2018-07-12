@@ -113,7 +113,8 @@ async def view_address(request):
             'transactions': transactions,
             'pagination': pagination,
             'unspent_info': unspent_info,
-            'last_height': last_height}
+            'last_height': last_height,
+            'tx_count': tx_count}
 app.router.add_get('/addresses/{address}', view_address)
 app.router.add_get('/addresses/{address}/page/{page}', view_address)
 
