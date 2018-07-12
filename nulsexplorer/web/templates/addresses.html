@@ -13,7 +13,8 @@
       <th scope="col">Rank</th>
       <th scope="col">Hash</th>
       <th scope="col" class="text-right">Locked Balance</th>
-      <th scope="col" class="text-right">Balance (including locked)</th>
+      <th scope="col" class="text-right">Available Balance</th>
+      <th scope="col" class="text-right">Total Balance</th>
     </tr>
   </thead>
   <tbody>
@@ -28,6 +29,7 @@
         </a>
       </th>
       <td class="text-right">{{"%0.2f" % (address.locked_value/100000000)}}</td>
+      <td class="text-right">{{"%0.2f" % (address.available_value/100000000)}}</td>
       <td class="text-right">{{"%0.2f" % (address.unspent_value/100000000)}}</td>
     </tr>
     {% endfor %}
