@@ -12,9 +12,7 @@
     <tr>
       <th scope="col">Rank</th>
       <th scope="col">Hash</th>
-      <th scope="col" class="text-right">Unspent TXs</th>
-      <th scope="col" class="text-right">Time Locked</th>
-      <th scope="col" class="text-right">Consensus Locked</th>
+      <th scope="col" class="text-right">Locked Balance</th>
       <th scope="col" class="text-right">Balance (including locked)</th>
     </tr>
   </thead>
@@ -29,9 +27,7 @@
           {{address._id}}
         </a>
       </th>
-      <td class="text-right">{{address.unspent_count}}</td>
-      <td class="text-right">{{"%0.2f" % (address.time_locked_value/1000000000)}}</td>
-      <td class="text-right">{{"%0.2f" % ((address.locked_value-address.time_locked_value)/1000000000)}}</td>
+      <td class="text-right">{{"%0.2f" % (address.locked_value/1000000000)}}</td>
       <td class="text-right">{{"%0.2f" % (address.unspent_value/1000000000)}}</td>
     </tr>
     {% endfor %}
