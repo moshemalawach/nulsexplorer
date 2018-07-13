@@ -18,7 +18,7 @@
               <p>
                 {% if input.address %}
                   <span class="float-right">{{input.value/100000000}} <i class="nuls"></i></span>
-                  <a href="/addresses/{{input.address}}">
+                  <a href="/addresses/{{input.address}}" class="address">
                     {{input.address}}
                   </a>
                   <a href="/transactions/{{input.fromHash}}#output{{input.fromIndex}}"
@@ -39,7 +39,7 @@
             {% for output in transaction.outputs %}
               <p>
                 <span class="float-right">{{output.value/100000000}} <i class="nuls"></i></span>
-                <a href="/addresses/{{output.address}}">
+                <a href="/addresses/{{output.address}}" class="address">
                   {{output.address}}
                 </a>
                 {% if (output.status < 3) and

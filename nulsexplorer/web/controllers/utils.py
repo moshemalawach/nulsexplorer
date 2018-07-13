@@ -1,5 +1,6 @@
 from math import ceil
 PER_PAGE = 20
+PER_PAGE_SUMMARY = 50
 
 class Pagination(object):
     def __init__(self, page, per_page, total_count):

@@ -7,13 +7,13 @@
   <h2>Addresses <small>("rich list")</small></h2>
   {{paginate(pagination, "/addresses/page/", ulclass="pagination-sm")}}
 </div>
-<table class="table table-striped">
+<table class="table table-striped table-sm">
   <thead class="thead-dark">
     <tr>
       <th scope="col">Rank</th>
       <th scope="col">Hash</th>
-      <th scope="col" class="text-right">Locked Balance</th>
-      <th scope="col" class="text-right">Available Balance</th>
+      <th scope="col" class="text-right hidden-sm-down">Locked Balance</th>
+      <th scope="col" class="text-right hidden-sm-down">Available Balance</th>
       <th scope="col" class="text-right">Total Balance</th>
     </tr>
   </thead>
@@ -24,13 +24,13 @@
         {{loop.index + ((pagination.page - 1) * pagination.per_page)}}
       </th>
       <td>
-        <a href="/addresses/{{address._id}}">
+        <a href="/addresses/{{address._id}}" class="address">
           {{address._id}}
         </a>
       </th>
-      <td class="text-right">{{"%0.2f" % (address.locked_value/100000000)}}</td>
-      <td class="text-right">{{"%0.2f" % (address.available_value/100000000)}}</td>
-      <td class="text-right">{{"%0.2f" % (address.unspent_value/100000000)}}</td>
+      <td class="text-right hidden-sm-down">{{"%0.2f" % (address.locked_value/100000000)}} <i class="nuls"></td>
+      <td class="text-right hidden-sm-down">{{"%0.2f" % (address.available_value/100000000)}} <i class="nuls"></td>
+      <td class="text-right">{{"%0.2f" % (address.unspent_value/100000000)}} <i class="nuls"></td>
     </tr>
     {% endfor %}
   </tbody>

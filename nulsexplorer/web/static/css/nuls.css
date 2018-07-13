@@ -15,6 +15,10 @@ h1, h2, h3, h4, h5, h6, th {
   font-family: 'Asap', sans-serif;
 }
 
+table{
+  font-size: 90%;
+}
+
 .header {
   background-image: linear-gradient(-133deg, #002e5e 0%, #092243 89%, #0a2140 100%);
 }
@@ -41,4 +45,23 @@ i.nuls {
 
 i.nuls:hover {
   filter: none;
+}
+
+a.address, span.address {
+  display: inline-block;
+  vertical-align: bottom;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 30vw;
+}
+
+.cell-full { max-width:1px; width:100%; }
+.cell-20 { max-width:1px; width:20%;  }
+.cell-ellipsis { overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.cell-noWrap { white-space:nowrap; }
+
+@media screen and (min-width: 640px) {
+  .tabbed-pagination ul {
+    margin-top: -2.8em;
+  }
 }

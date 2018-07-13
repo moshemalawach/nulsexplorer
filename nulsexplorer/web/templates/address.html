@@ -4,10 +4,10 @@
 {% block title %}Address detail {{address}}{% endblock %}
 {% block content %}
 <h2>Address detail</h2>
-<h3>{{address}}</h3>
+<h3 class="text-truncate">{{address}}</h3>
 <div class="row">
   <div class="col-sm">
-    <table class="table table-sm table-striped">
+    <table class="table table-sm table-striped table-responsive-sm">
       <tbody>
         <tr>
           <th scope="col" colspan="2">Summary</th>
@@ -18,7 +18,7 @@
         </tr>
         <tr>
           <td>TX count</td>
-          <td class="text-right">{{len(transactions)}}</td>
+          <td class="text-right">{{tx_count}}</td>
         </tr>
         <tr>
           <td>Unspent TX</td>
@@ -26,32 +26,90 @@
         </tr>
         <tr>
           <td>Balance (including locked)</td>
-          <td class="text-right">{{"%0.4f" % (unspent_info.unspent_value/100000000)}} <i class="nuls"></i></td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.get('unspent_value', 0)/100000000)}} <i class="nuls"></i></td>
         </tr>
         <tr>
           <td>Locked balance</td>
-          <td class="text-right">{{"%0.4f" % ((unspent_info.time_locked_value+unspent_info.consensus_locked_value)/100000000)}} <i class="nuls"></i></td>
+          <td class="text-right">{{"%0.4f" % ((unspent_info.get('time_locked_value', 0)+unspent_info.get('consensus_locked_value', 0))/100000000)}} <i class="nuls"></i></td>
         </tr>
         <tr>
           <td>Time locked balance</td>
-          <td class="text-right">{{"%0.4f" % (unspent_info.time_locked_value/100000000)}} <i class="nuls"></i></td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.get('time_locked_value', 0)/100000000)}} <i class="nuls"></i></td>
         </tr>
         <tr>
           <td>Consensus locked balance</td>
-          <td class="text-right">{{"%0.4f" % ((unspent_info.consensus_locked_value)/100000000)}} <i class="nuls"></i></td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.get('consensus_locked_value', 0)/100000000)}} <i class="nuls"></i></td>
         </tr>
       </tbody>
     </table>
   </div>
 </div>
 <h4>Transactions</h4>
+<ul class="nav nav-tabs mb-1">
+  <li class="nav-item">
+    <a class="nav-link{{(mode == 'summary') and ' active' or ''}}" href="/addresses/{{address}}">Summary (w/o rewards)</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{{(mode == 'full-summary') and ' active' or ''}}" href="/addresses/{{address}}/full-summary">Full Summary</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{{(mode == 'detail') and ' active' or ''}}" href="/addresses/{{address}}/detail">Detail</a>
+  </li>
+</ul>
 {% if pagination.pages > 1 %}
-{{paginate(pagination, "/addresses/%s/page/" % address, ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
+{{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse tabbed-pagination")}}
 {% endif %}
-{% for transaction in transactions %}
-  {{ transaction_detail(transaction) }}
-{% endfor %}
+{% if mode in ["summary", "full-summary"] %}
+<table class="table table-responsive-md">
+  <thead>
+    <tr>
+      <th scope="col">Tx Hash</th>
+      <th scope="col">Block</th>
+      <th scope="col">Date</th>
+      <th scope="col">From</th>
+      <th scope="col">To</th>
+      <th scope="col"></th>
+      <th scope="col">Value</th>
+      <th scope="col">Fee</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for transaction in transactions %}
+    <tr>
+      <td class="cell-20 cell-ellipsis"><a href="/transactions/{{transaction.hash}}">{{transaction.hash}}</a></td>
+      <td>{{transaction.blockHeight}}</td>
+      <td>{{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}</td>
+      <td class="cell-20 cell-ellipsis">
+        {% if transaction.source != None %}
+        <a href="/addresses/{{transaction.source}}">
+          {{transaction.source}}
+        </a>
+        {% endif %}
+      </td>
+      <td class="cell-20 cell-ellipsis">
+        {% if transaction.target != None %}
+        <a href="/addresses/{{transaction.target }}">
+          {{transaction.target}}
+        </a>
+        {% endif %}
+      </td>
+      <td>
+        <span class="badge {% if transaction.display_type == 'IN' %}badge-success{% elif transaction.display_type == 'OUT' %}badge-warning{% else %}badge-primary{% endif %}">
+          {{transaction.display_type}}
+        </span>
+      </td>
+      <td>{{transaction.value != None and "%0.3f"%(transaction.value/100000000) or ''}}</td>
+      <td>{{transaction.fee/100000000}}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% elif mode == "detail" %}
+  {% for transaction in transactions %}
+    {{ transaction_detail(transaction) }}
+  {% endfor %}
+{% endif %}
 {% if pagination.pages > 1 %}
-{{paginate(pagination, "/addresses/%s/page/" % address, ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
+{{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
 {% endif %}
 {% endblock %}
