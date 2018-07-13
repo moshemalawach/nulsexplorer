@@ -126,3 +126,7 @@ if __name__ == "__main__":
     print (block.header.time,
            block.header.height,
            block.header.txCount)
+    for tx in block.transactions:
+        print("transaction type", tx.type)
+        print("remark", tx.remark)
+        print("coin data", tx.coin_data.inputs, tx.coin_data.outputs)

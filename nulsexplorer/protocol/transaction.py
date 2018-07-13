@@ -1,7 +1,8 @@
 import struct
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         write_with_length, read_by_length,
-                                        writeUint48, readUint48, hash_twice)
+                                        writeUint48, readUint48, hash_twice,
+                                        PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
 
 class Coin(BaseNulsData):
     def __init__(self, data=None):
@@ -13,10 +14,8 @@ class Coin(BaseNulsData):
 
     def parse(self, buffer, cursor=0):
         self.owner = read_by_length(buffer, cursor)
-        print(self.owner.hex())
         cursor += len(self.owner) + 1
-        print('c', len(buffer), cursor)
-        self.na = struct.unpack("Q", buffer[cursor:cursor+8])
+        self.na = struct.unpack("Q", buffer[cursor:cursor+8])[0]
         cursor += 8
         self.lockTime = readUint48(buffer, cursor)
         cursor += 6
@@ -33,7 +32,6 @@ class CoinData(BaseNulsData):
             self.parse(data)
 
     def parse(self, buffer, cursor=0):
-        print('cd', len(buffer), cursor)
         self.from_count = buffer[cursor]
         cursor += 1
         self.inputs = list()
@@ -57,23 +55,83 @@ class Transaction(BaseNulsData):
         self.type = None
         self.time = None
         self.scriptSig = None
+        self.module_data = dict()
         if data is not None:
             self.parse(data)
 
-    def parse_data(self, buffer, cursor=0):
+    def _parse_data(self, buffer, cursor=0):
+        md = self.module_data
         if self.type == 1: # consensus reward
-            pass
+            cursor += len(PLACE_HOLDER)
+
+        elif self.type == 2: # tranfer
+            cursor += len(PLACE_HOLDER)
 
         elif self.type == 3: # alias
-            pass
+            md['address'] = read_by_length(buffer, cursor)
+            cursor += len(md['address']) + 1
+
+            md['alias'] = read_by_length(buffer, cursor)
+            cursor += len(md['alias']) + 1
+            md['alias'] = md['alias'].decode('utf-8')
+
+        elif self.type == 4: # register agent
+            md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
+            cursor += 8
+            md['agentAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+            cursor += ADDRESS_LENGTH
+            md['packingAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+            cursor += ADDRESS_LENGTH
+            md['rewardAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+            cursor += ADDRESS_LENGTH
+            md['commissionRate'] = struct.unpack("d", buffer[cursor:cursor+8])[0]
+            cursor += 8
+            return cursor
+
+        elif self.type == 5: # join consensus
+            md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
+            cursor += 8
+            md['address'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+            cursor += ADDRESS_LENGTH
+            md['agentHash'] = buffer[cursor:cursor+HASH_LENGTH]
+            cursor += HASH_LENGTH
+
+        elif self.type == 6: # cancel deposit
+            md['joinTxHash'] = buffer[cursor:cursor+HASH_LENGTH]
+            cursor += HASH_LENGTH
+
+        elif self.type == 7: # yellow card
+            md['count'] = buffer[cursor]
+            cursor += 1
+            addresses = list()
+            for i in range(md['count']):
+                addresses.append(buffer[cursor:cursor+ADDRESS_LENGTH])
+                cursor += ADDRESS_LENGTH
+            md['addresses'] = addresses
+
+        elif self.type == 8: # red card
+            md['address'] = read_by_length(buffer, cursor)
+            cursor += len(md['address']) + 1
+            md['reason'] = buffer[cursor]
+            cursor += 1
+            md['evidence'] = read_by_length(buffer, cursor)
+            cursor += len(md['evidence']) + 1
+
+        elif self.type == 9: # stop agent
+            md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH]
+            cursor += HASH_LENGTH
+
+        return cursor
 
     def parse(self, buffer, cursor=0):
-        self.type = struct.unpack("H", buffer[cursor:cursor+2])
+        self.type = struct.unpack("H", buffer[cursor:cursor+2])[0]
         cursor += 2
         self.time = readUint48(buffer, cursor)
         cursor += 6
         self.remark = read_by_length(buffer, cursor)
         cursor += len(self.remark) + 1
+
+        cursor = self._parse_data(buffer, cursor)
 
         self.coin_data = CoinData()
         cursor = self.coin_data.parse(buffer, cursor)

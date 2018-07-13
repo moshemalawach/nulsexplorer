@@ -1,6 +1,8 @@
 from hashlib import sha256
 
 PLACE_HOLDER = b"\xFF\xFF\xFF\xFF"
+ADDRESS_LENGTH = 23
+HASH_LENGTH = 34
 
 class BaseNulsData:
     def _pre_parse(buffer, cursor=None, length=None):
