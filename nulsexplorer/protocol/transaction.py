@@ -60,16 +60,25 @@ class CoinData(BaseNulsData):
             self.parse(data)
 
     def parse(self, buffer, cursor=0):
-        self.from_count = buffer[cursor]
-        cursor += 1
+        if buffer[cursor:cursor+4] == PLACE_HOLDER:
+            return cursor+4
+
+        fc = VarInt()
+        fc.parse(buffer, cursor)
+        self.from_count = fc.value
+        cursor += fc.originallyEncodedSize
+        print(self.from_count)
         self.inputs = list()
         for i in range(self.from_count):
             coin = Coin()
             cursor = coin.parse(buffer, cursor)
             self.inputs.append(coin)
 
+        tc = VarInt()
+        tc.parse(buffer, cursor)
+        self.to_count = tc.value
+        cursor += tc.originallyEncodedSize
         self.to_count = buffer[cursor]
-        cursor += 1
         self.outputs = list()
         for i in range(self.to_count):
             coin = Coin()
@@ -97,6 +106,8 @@ class Transaction(BaseNulsData):
 
     def _parse_data(self, buffer, cursor=0):
         md = self.module_data
+        print(self.type)
+
         if self.type == 1: # consensus reward
             cursor += len(PLACE_HOLDER)
 
@@ -137,7 +148,7 @@ class Transaction(BaseNulsData):
             cursor += HASH_LENGTH
 
         elif self.type == 7: # yellow card
-            md['count'] = int(buffer[cursor])
+            md['count'] = buffer[cursor]
             cursor += 1
             addresses = list()
             for i in range(md['count']):
@@ -194,13 +205,18 @@ class Transaction(BaseNulsData):
 
 
     def to_dict(self):
+        try:
+            remark = self.remark and self.remark.decode('utf-8') or None
+        except UnicodeDecodeError:
+            remark = None
+
         return {
             'hash': str(self.hash),
             'type': self.type,
             'time': self.time,
             'blockHeight': self.height,
             'fee': self.coin_data.get_fee(),
-            'remark': self.remark and self.remark.decode('utf-8') or None,
+            'remark': remark,
             'scriptSig': self.scriptSig and self.scriptSig.hex() or None,
             'size': self.size,
             'info': self.module_data,

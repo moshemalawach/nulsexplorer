@@ -128,9 +128,11 @@ class VarInt:
     # public final long value;
     # private final int originallyEncodedSize;
 
-    def __init__(self, value):
+    def __init__(self, value=None):
         self.value = value
-        self.originallyEncodedSize = self.getSizeInBytes()
+        self.originallyEncodedSize = 1
+        if value is not None:
+            self.originallyEncodedSize = self.getSizeInBytes()
 
     def parse(self, buf, offset):
         first = 0xFF & buf[offset]
@@ -192,7 +194,7 @@ class VarInt:
     def encode(self):
         ob = bytes()
         size = self.sizeOf(self.value)
-        
+
         if size == 1:
             return bytes((self.value, ))
         elif size == 3:
