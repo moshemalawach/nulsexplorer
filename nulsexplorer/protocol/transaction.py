@@ -1,7 +1,9 @@
 import struct
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         write_with_length, read_by_length,
-                                        writeUint48, readUint48, hash_twice,
+                                        writeUint48, readUint48,
+                                        writeUint32, writeUint64,
+                                        writeVarInt, hash_twice, VarInt,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
 
 class Coin(BaseNulsData):
@@ -87,7 +89,7 @@ class Transaction(BaseNulsData):
         self.type = None
         self.time = None
         self.hash = None
-        self.height = None
+        self.height = height
         self.scriptSig = None
         self.module_data = dict()
         if data is not None:
@@ -163,6 +165,10 @@ class Transaction(BaseNulsData):
         cursor += 2
         self.time = readUint48(buffer, cursor)
         cursor += 6
+
+
+        st2_cursor = cursor
+
         self.remark = read_by_length(buffer, cursor)
         cursor += len(self.remark) + 1
 
@@ -172,14 +178,20 @@ class Transaction(BaseNulsData):
         cursor = self.coin_data.parse(buffer, cursor)
         med_cursor = cursor
 
+        values = bytes((self.type,)) \
+                + bytes((255,)) + writeUint64(self.time) \
+                + buffer[st2_cursor:med_cursor]
+
+        self.hash_bytes = hash_twice(values)
+        self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
+
         self.scriptSig = read_by_length(buffer, cursor)
         cursor += len(self.scriptSig) + 1
         end_cursor = cursor
         self.size = end_cursor - st_cursor
-        self.hash_bytes = hash_twice(buffer[st_cursor:cursor])
-        self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
 
         return cursor
+
 
     def to_dict(self):
         return {

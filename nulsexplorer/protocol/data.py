@@ -1,4 +1,5 @@
 from hashlib import sha256
+import six
 
 PLACE_HOLDER = b"\xFF\xFF\xFF\xFF"
 ADDRESS_LENGTH = 23
@@ -87,5 +88,116 @@ def writeUint48(val):
                    (0xFF & (val >> 40))])
     return nval
 
+def _byte(b):
+    return bytes((b, ))
+
+def writeVarInt(number):
+    """Pack `number` into varint bytes"""
+    buf = b''
+    while True:
+        towrite = number & 0x7f
+        number >>= 7
+        if number:
+            buf += _byte(towrite | 0x80)
+        else:
+            buf += _byte(towrite)
+            break
+    return buf
+
 def hash_twice(buffer):
     return sha256(sha256(buffer).digest()).digest()
+
+
+def writeUint32(val):
+    return bytes([(0xFF & val),
+                  (0xFF & (val >> 8)),
+                  (0xFF & (val >> 16)),
+                  (0xFF & (val >> 24))])
+
+def writeUint64(val):
+    return bytes([(0xFF & val),
+                  (0xFF & (val >> 8)),
+                  (0xFF & (val >> 16)),
+                  (0xFF & (val >> 24)),
+                  (0xFF & (val >> 32)),
+                  (0xFF & (val >> 40)),
+                  (0xFF & (val >> 48)),
+                  (0xFF & (val >> 56))])
+
+class VarInt:
+    # public final long value;
+    # private final int originallyEncodedSize;
+
+    def __init__(self, value):
+        self.value = value
+        self.originallyEncodedSize = self.getSizeInBytes()
+
+    def parse(self, buf, offset):
+        first = 0xFF & buf[offset]
+        print(first)
+        if (first < 253):
+            self.value = first
+            # 1 data byte (8 bits)
+            self.originallyEncodedSize = 1
+
+        elif (first == 253):
+            self.value = (0xFF & buf[offset + 1]) | ((0xFF & buf[offset + 2]) << 8)
+            # 1 marker + 2 data bytes (16 bits)
+            self.originallyEncodedSize = 3
+
+        elif (first == 254):
+            value = SerializeUtils.readUint32LE(buf, offset + 1)
+            # 1 marker + 4 data bytes (32 bits)
+            self.originallyEncodedSize = 5
+
+        else:
+            value = SerializeUtils.readInt64LE(buf, offset + 1)
+            # 1 marker + 8 data bytes (64 bits)
+            self.originallyEncodedSize = 9
+
+    def getOriginalSizeInBytes(self):
+        return self.originallyEncodedSize
+
+    def getSizeInBytes(self):
+        return self.sizeOf(self.value)
+
+    @classmethod
+    def sizeOf(cls, value):
+        # if negative, it's actually a very large unsigned long value
+        print(value)
+        if (value < 0):
+            # 1 marker + 8 data bytes
+            return 9
+
+        if (value < 253):
+            # 1 data byte
+            return 1
+
+        if (value <= 0xFFFF):
+            # 1 marker + 2 data bytes
+            return 3
+
+        if (value <= 0xFFFFFFFF):
+            # 1 marker + 4 data bytes
+            return 5
+
+        # 1 marker + 8 data bytes
+        return 9
+
+# //    /**
+# //     * Encodes the value into its minimal representation.
+# //     *
+# //     * @return the minimal encoded bytes of the value
+# //     */
+    def encode(self):
+        ob = bytes()
+        size = self.sizeOf(self.value)
+        
+        if size == 1:
+            return bytes((self.value, ))
+        elif size == 3:
+            return bytes((253, self.value, self.value >> 8))
+        elif size == 5:
+            return bytes((254, )) + writeUint32(self.value)
+        else:
+            return bytes((255, )) + writeUint64(self.value)
