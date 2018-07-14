@@ -1,11 +1,14 @@
 import asyncio
 import aiohttp
 import logging
+import base64
 from nulsexplorer.web import app
 from nulsexplorer import model
 from nulsexplorer.model.blocks import get_last_block_height, store_block
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.consensus import Consensus
+
+from nulsexplorer.protocol.block import Block
 
 LOGGER = logging.getLogger('connector')
 
@@ -30,12 +33,15 @@ async def request_block(session, height=None, hash=None):
     last_height = -1
     if height is not None:
         resp = await api_request(session, 'block/height/%d' % height)
-    elif hash is not None:
-        resp = await api_request(session, 'block/hash/%s' % hash)
+        hash = resp['hash']
+
+    if hash is not None:
+        resp = await api_request(session, 'block/bytes?hash=%s' % hash)
+        block = Block(base64.b64decode(resp['value'])).to_dict()
     else:
         raise ValueError("Neither height nor hash set for block request")
 
-    return resp
+    return block
 
 async def request_consensus(session):
     resp = await api_request(session, 'consensus/agent/list?pageSize=100')
@@ -62,6 +68,7 @@ async def check_blocks():
 
                 for block_height in range(last_stored_height+1, last_height+1):
                     block = await request_block(session, height=block_height)
+                    print(block)
                     LOGGER.info("Synchronizing block #%d" % block['height'])
                     await store_block(block)
                     last_stored_height = block['height']
