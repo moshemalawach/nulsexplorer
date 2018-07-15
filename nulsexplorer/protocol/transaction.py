@@ -124,12 +124,15 @@ class Transaction(BaseNulsData):
         elif self.type == 4: # register agent
             md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
             cursor += 8
-            md['agentAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH].hex()
+            md['agentAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
             cursor += ADDRESS_LENGTH
-            md['packingAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH].hex()
+            md['agentAddress'] = address_from_hash(md['agentAddress'])
+            md['packingAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
             cursor += ADDRESS_LENGTH
-            md['rewardAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH].hex()
+            md['packingAddress'] = address_from_hash(md['packingAddress'])
+            md['rewardAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
             cursor += ADDRESS_LENGTH
+            md['rewardAddress'] = address_from_hash(md['rewardAddress'])
             md['commissionRate'] = struct.unpack("d", buffer[cursor:cursor+8])[0]
             cursor += 8
             return cursor
@@ -137,8 +140,9 @@ class Transaction(BaseNulsData):
         elif self.type == 5: # join consensus
             md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
             cursor += 8
-            md['address'] = buffer[cursor:cursor+ADDRESS_LENGTH].hex()
+            md['address'] = buffer[cursor:cursor+ADDRESS_LENGTH]
             cursor += ADDRESS_LENGTH
+            md['address'] = address_from_hash(md['address'])
             md['agentHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
             cursor += HASH_LENGTH
 
