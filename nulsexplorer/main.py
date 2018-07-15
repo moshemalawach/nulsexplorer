@@ -31,13 +31,15 @@ async def request_last_height(session):
 
 async def request_block(session, height=None, hash=None):
     last_height = -1
+    block = {}
     if height is not None:
         resp = await api_request(session, 'block/height/%d' % height)
+        block = resp
         hash = resp['hash']
 
     if hash is not None:
         resp = await api_request(session, 'block/bytes?hash=%s' % hash)
-        block = Block(base64.b64decode(resp['value'])).to_dict()
+        block.update(Block(base64.b64decode(resp['value'])).to_dict())
     else:
         raise ValueError("Neither height nor hash set for block request")
 
