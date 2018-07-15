@@ -3,6 +3,7 @@ from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
+from aiohttp import web
 from .utils import Pagination, PER_PAGE
 
 
