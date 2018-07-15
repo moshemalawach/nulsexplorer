@@ -136,7 +136,6 @@ class VarInt:
 
     def parse(self, buf, offset):
         first = 0xFF & buf[offset]
-        print(first)
         if (first < 253):
             self.value = first
             # 1 data byte (8 bits)
@@ -166,7 +165,6 @@ class VarInt:
     @classmethod
     def sizeOf(cls, value):
         # if negative, it's actually a very large unsigned long value
-        print(value)
         if (value < 0):
             # 1 marker + 8 data bytes
             return 9

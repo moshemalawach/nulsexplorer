@@ -67,7 +67,6 @@ class CoinData(BaseNulsData):
         fc.parse(buffer, cursor)
         self.from_count = fc.value
         cursor += fc.originallyEncodedSize
-        print(self.from_count)
         self.inputs = list()
         for i in range(self.from_count):
             coin = Coin()
@@ -78,7 +77,7 @@ class CoinData(BaseNulsData):
         tc.parse(buffer, cursor)
         self.to_count = tc.value
         cursor += tc.originallyEncodedSize
-        self.to_count = buffer[cursor]
+        #self.to_count = buffer[cursor]
         self.outputs = list()
         for i in range(self.to_count):
             coin = Coin()
@@ -106,7 +105,6 @@ class Transaction(BaseNulsData):
 
     def _parse_data(self, buffer, cursor=0):
         md = self.module_data
-        print(self.type)
 
         if self.type == 1: # consensus reward
             cursor += len(PLACE_HOLDER)

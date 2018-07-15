@@ -144,4 +144,5 @@ if __name__ == "__main__":
     print (block.header.time,
            block.header.height,
            block.header.txCount)
-    print (block.to_dict())
+    import pprint
+    pprint.pprint (block.to_dict())

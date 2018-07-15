@@ -68,7 +68,6 @@ async def check_blocks():
 
                 for block_height in range(last_stored_height+1, last_height+1):
                     block = await request_block(session, height=block_height)
-                    print(block)
                     LOGGER.info("Synchronizing block #%d" % block['height'])
                     await store_block(block)
                     last_stored_height = block['height']
