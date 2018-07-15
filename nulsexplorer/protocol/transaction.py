@@ -4,6 +4,7 @@ from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         writeUint48, readUint48,
                                         writeUint32, writeUint64,
                                         writeVarInt, hash_twice, VarInt,
+                                        address_from_hash,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
 
 class Coin(BaseNulsData):
@@ -18,8 +19,8 @@ class Coin(BaseNulsData):
             self.parse(data)
 
     def parse(self, buffer, cursor=0):
-        owner = read_by_length(buffer, cursor)
-        cursor += len(owner) + 1
+        pos, owner = read_by_length(buffer, cursor)
+        cursor += pos
         if len(owner) > ADDRESS_LENGTH:
             self.fromHash = owner[:-1]
             self.fromIndex = owner[-1]
@@ -38,7 +39,7 @@ class Coin(BaseNulsData):
             'lockTime': self.lockTime
         }
         if self.address is not None:
-            val['address'] = self.address.hex()
+            val['address'] = address_from_hash(self.address)
 
         if self.fromHash is not None:
             val['fromHash'] = self.fromHash.hex()
@@ -113,11 +114,11 @@ class Transaction(BaseNulsData):
             cursor += len(PLACE_HOLDER)
 
         elif self.type == 3: # alias
-            md['address'] = read_by_length(buffer, cursor)
-            cursor += len(md['address']) + 1
+            pos, md['address'] = read_by_length(buffer, cursor)
+            cursor += pos
 
-            md['alias'] = read_by_length(buffer, cursor)
-            cursor += len(md['alias']) + 1
+            pos, md['alias'] = read_by_length(buffer, cursor)
+            cursor += pos
             md['alias'] = md['alias'].decode('utf-8')
 
         elif self.type == 4: # register agent
@@ -150,17 +151,19 @@ class Transaction(BaseNulsData):
             cursor += 1
             addresses = list()
             for i in range(md['count']):
-                addresses.append(buffer[cursor:cursor+ADDRESS_LENGTH].hex())
+                addresses.append(buffer[cursor:cursor+ADDRESS_LENGTH])
                 cursor += ADDRESS_LENGTH
-            md['addresses'] = addresses
+            md['addresses'] = list(map(address_from_hash, addresses))
 
         elif self.type == 8: # red card
-            md['address'] = read_by_length(buffer, cursor).hex()
-            cursor += len(md['address']) + 1
+            pos, md['address'] = read_by_length(buffer, cursor)
+            cursor += pos
+            md['address'] = address_from_hash(md['address'])
             md['reason'] = buffer[cursor]
             cursor += 1
-            md['evidence'] = read_by_length(buffer, cursor).hex()
-            cursor += len(md['evidence']) + 1
+            pos, md['evidence'] = read_by_length(buffer, cursor)
+            cursor += pos
+            md['evidence'] = md['evidence'].hex()
 
         elif self.type == 9: # stop agent
             md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH]
@@ -178,8 +181,8 @@ class Transaction(BaseNulsData):
 
         st2_cursor = cursor
 
-        self.remark = read_by_length(buffer, cursor)
-        cursor += len(self.remark) + 1
+        pos, self.remark = read_by_length(buffer, cursor, check_size=True)
+        cursor += pos
 
         cursor = self._parse_data(buffer, cursor)
 
@@ -194,8 +197,8 @@ class Transaction(BaseNulsData):
         self.hash_bytes = hash_twice(values)
         self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
 
-        self.scriptSig = read_by_length(buffer, cursor)
-        cursor += len(self.scriptSig) + 1
+        pos, self.scriptSig = read_by_length(buffer, cursor, check_size=True)
+        cursor += pos
         end_cursor = cursor
         self.size = end_cursor - st_cursor
 
@@ -213,7 +216,7 @@ class Transaction(BaseNulsData):
             'type': self.type,
             'time': self.time,
             'blockHeight': self.height,
-            'fee': self.coin_data.get_fee(),
+            'fee': self.type != 1 and self.coin_data.get_fee() or 0,
             'remark': remark,
             'scriptSig': self.scriptSig and self.scriptSig.hex() or None,
             'size': self.size,

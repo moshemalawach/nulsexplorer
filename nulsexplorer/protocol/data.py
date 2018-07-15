@@ -1,9 +1,43 @@
 from hashlib import sha256
+from binascii import hexlify, unhexlify
 import six
 
 PLACE_HOLDER = b"\xFF\xFF\xFF\xFF"
 ADDRESS_LENGTH = 23
 HASH_LENGTH = 34
+
+B58_DIGITS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+
+def getxor(body):
+    xor = 0
+    for c in body:
+        xor ^= c
+    return xor
+
+def b58_encode(b):
+    """Encode bytes to a base58-encoded string"""
+
+    # Convert big-endian bytes to integer
+    n = int('0x0' + hexlify(b).decode('utf8'), 16)
+
+    # Divide that integer into bas58
+    res = []
+    while n > 0:
+        n, r = divmod (n, 58)
+        res.append(B58_DIGITS[r])
+    res = ''.join(res[::-1])
+
+    # Encode leading zeros as base58 zeros
+    czero = 0
+    pad = 0
+    for c in b:
+        if c == czero: pad += 1
+        else: break
+
+    return B58_DIGITS[0] * pad + res
+
+def address_from_hash(addr):
+    return b58_encode(addr+bytes((getxor(addr), )))
 
 class BaseNulsData:
     def _pre_parse(buffer, cursor=None, length=None):
@@ -43,7 +77,7 @@ class NulsDigestData(BaseNulsData):
 
     def parse(self, buffer):
         self.alg_type = buffer[0]
-        self.digest_bytes = read_by_length(buffer, cursor=1)
+        pos, self.digest_bytes = read_by_length(buffer, cursor=1)
 
     def serialize(self):
         return bytes([self.alg_type, len(self.digest_bytes)]) + self.digest_bytes
@@ -51,16 +85,24 @@ class NulsDigestData(BaseNulsData):
     def __str__(self):
         return self.serialize().hex()
 
-def read_by_length(buffer, cursor=None):
-    if cursor is not None:
-        buffer = buffer[cursor:]
+def read_by_length(buffer, cursor=0, check_size=True):
+    if check_size:
+        fc = VarInt()
+        fc.parse(buffer, cursor)
+        length = fc.value
+        size = fc.originallyEncodedSize
+    else:
+        length = buffer[cursor]
+        size = 1
 
-    length = buffer[0]
-    value = buffer[1:length+1]
-    return value
+    value = buffer[cursor+size:cursor+size+length]
+    return (size+length, value)
 
 def write_with_length(buffer):
-    return bytes([len(buffer)]) + buffer
+    if len(buffer) < 253:
+        return bytes([len(buffer)]) + buffer
+    else:
+        return VarInt(buffer).encode()
 
 def readUint48(buffer, cursor=0):
     """ wtf...

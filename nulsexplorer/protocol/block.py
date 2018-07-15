@@ -14,12 +14,12 @@ class P2PKHScriptSig(BaseNulsData):
             self.parse(data)
 
     def parse(self, buffer, cursor=0):
-        self.public_key = read_by_length(buffer, cursor=cursor)
-        cursor += len(self.public_key) + 1
+        pos, self.public_key = read_by_length(buffer, cursor=cursor)
+        cursor += pos
         self.sign_alg_type = buffer[cursor]
         cursor += 1
-        self.sign_bytes = read_by_length(buffer, cursor=cursor)
-        cursor += 1
+        pos, self.sign_bytes = read_by_length(buffer, cursor=cursor)
+        cursor += pos
 
     @property
     def size(self):
@@ -54,8 +54,8 @@ class BlockHeader(BaseNulsData):
         self.height, self.txCount = struct.unpack("II", buffer[cursor:cursor+8])
         cursor += 8
 
-        self.extend = read_by_length(buffer, cursor)
-        cursor += len(self.extend) + 1
+        pos, self.extend = read_by_length(buffer, cursor, check_size=True)
+        cursor += pos
 
         self.hash_bytes = hash_twice(self.serialize())
         self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
@@ -117,7 +117,7 @@ class Block(BaseNulsData):
             'extend': self.header.extend.hex(),
             'size': self.size,
             'reward': sum([t.coin_data.get_output_sum() for t in self.transactions if t.type == 1]),
-            'fee': sum([t.coin_data.get_fee() for t in self.transactions]),
+            'fee': sum([t.coin_data.get_fee() for t in self.transactions if t.type != 1]),
             'txList': [t.to_dict() for t in self.transactions]
         }
 
