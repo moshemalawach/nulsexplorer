@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import transaction_detail with context %}
+{% from "macros.html" import transaction_summary with context %}
 {% from "macros.html" import paginate with context %}
 {% block title %}Block #{{block.height}}{% endblock %}
 {% block content %}
@@ -22,12 +23,13 @@
         </tr>
         <tr>
           <td>Commission</td>
-          <td class="text-right">{{agent.commissionRate}}%</td>
+          <td class="text-right">{{transaction.info.commissionRate}}%</td>
         </tr>
         <tr>
           <td>Bond</td>
           <td class="text-right">{{transaction.info.deposit/100000000}} <i class="nuls"></td>
         </tr>
+        {% if agent %}
         <tr>
           <td>Participants</td>
           <td class="text-right">{{agent.memberCount}}</td>
@@ -36,6 +38,7 @@
           <td>Total entrusted</td>
           <td class="text-right">{{"%0.2f" % (agent.totalDeposit/100000000)}} <i class="nuls"></i></td>
         </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
@@ -85,5 +88,37 @@
       </table>
     </div>
   </div>
+
+  {% if pagination.pages > 1 %}
+  {{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse tabbed-pagination")}}
+  {% endif %}
+  {% if mode in ["summary", "full-summary"] %}
+  <table class="table table-responsive-md">
+    <thead>
+      <tr>
+        <th scope="col">Tx Hash</th>
+        <th scope="col">Block</th>
+        <th scope="col">Date</th>
+        <th scope="col">From</th>
+        <th scope="col">To</th>
+        <th scope="col"></th>
+        <th scope="col">Value</th>
+        <th scope="col">Fee</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for transaction in transactions %}
+        {{ transaction_summary(transaction) }}
+      {% endfor %}
+    </tbody>
+  </table>
+  {% elif mode == "detail" %}
+    {% for transaction in transactions %}
+      {{ transaction_detail(transaction) }}
+    {% endfor %}
+  {% endif %}
+  {% if pagination.pages > 1 %}
+  {{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
+  {% endif %}
 
 {% endblock %}

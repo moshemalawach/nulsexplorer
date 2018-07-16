@@ -4,6 +4,7 @@ from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
+from nulsexplorer.web.controllers.addresses import summarize_tx
 from aiocache import cached, SimpleMemoryCache
 from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY
 
@@ -56,7 +57,10 @@ async def view_node(request):
     transaction = await Transaction.find_one(hash = txhash)
     block = await find_block({'height': transaction['blockHeight']})
     consensus = await Consensus.collection.find_one(sort=[('height', -1)])
-    agent = [a for a in consensus['agents'] if a['agentHash'] == txhash][0]
+    
+    agent = None
+    if agent in [a['agentHash'] for a in consensus['agents']]:
+        agent = [a for a in consensus['agents'] if a['agentHash'] == txhash][0]
 
     mode = request.match_info.get('mode', 'summary')
     if mode not in ['stats', 'summary', 'detail']:
@@ -80,7 +84,7 @@ async def view_node(request):
                          {'info.agentHash': txhash}
                      ]},
                      {'$and': [
-                         {'type': 4}, # leave
+                         {'type': 4}, # register
                          {'hash': txhash}
                      ]}]}
     tx_count = await Transaction.count(where_query)
@@ -90,7 +94,8 @@ async def view_node(request):
                                                         sort_order=-1,
                                                         limit=per_page,
                                                         skip=(page-1)*per_page)]
-
+    if "summary" in mode:
+        transactions = [await summarize_tx(tx, transaction['info']['agentAddress']) for tx in transactions]
 
     pagination = Pagination(page, per_page, tx_count)
 

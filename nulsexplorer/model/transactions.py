@@ -39,6 +39,14 @@ class Transaction(BaseClass):
                            batch_transactions=None):
         #await cls.collection.insert(tx_data)
         transaction = tx_data
+
+        if transaction['type'] == 6:
+            join_tx_hash = transaction['info'].get('joinTxHash', None)
+            if join_tx_hash is not None:
+                join_tx = await cls.collection.find_one(dict(hash=join_tx_hash))
+                transaction['info']['address'] = join_tx['info']['address']
+                transaction['info']['agentHash'] = join_tx['info']['agentHash']
+
         for i, inputdata in enumerate(transaction['inputs']):
             fhash = inputdata['fromHash']
             fidx = inputdata['fromIndex']

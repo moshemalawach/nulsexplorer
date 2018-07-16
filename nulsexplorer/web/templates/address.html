@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "macros.html" import transaction_detail with context %}
+{% from "macros.html" import transaction_summary with context %}
 {% from "macros.html" import paginate with context %}
 {% block title %}Address detail {{address}}{% endblock %}
 {% block content %}
@@ -75,32 +76,7 @@
   </thead>
   <tbody>
     {% for transaction in transactions %}
-    <tr>
-      <td class="cell-20 cell-ellipsis"><a href="/transactions/{{transaction.hash}}">{{transaction.hash}}</a></td>
-      <td>{{transaction.blockHeight}}</td>
-      <td>{{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}</td>
-      <td class="cell-20 cell-ellipsis">
-        {% if transaction.source != None %}
-        <a href="/addresses/{{transaction.source}}">
-          {{transaction.source}}
-        </a>
-        {% endif %}
-      </td>
-      <td class="cell-20 cell-ellipsis">
-        {% if transaction.target != None %}
-        <a href="/addresses/{{transaction.target }}">
-          {{transaction.target}}
-        </a>
-        {% endif %}
-      </td>
-      <td>
-        <span class="badge {% if transaction.display_type == 'IN' %}badge-success{% elif transaction.display_type == 'OUT' %}badge-warning{% else %}badge-primary{% endif %}">
-          {{transaction.display_type}}{% if transaction.info.get('alias', None) %} {{transaction.info.alias}}{% endif %}
-        </span>
-      </td>
-      <td>{{transaction.value != None and "%0.3f"%(transaction.value/100000000) or ''}}</td>
-      <td>{{transaction.fee/100000000}}</td>
-    </tr>
+      {{ transaction_summary(transaction) }}
     {% endfor %}
   </tbody>
 </table>
