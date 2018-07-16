@@ -11,6 +11,10 @@ from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY
 
 from aiocache import cached, SimpleMemoryCache
 
+@cached(ttl=60*10, cache=SimpleMemoryCache)
+async def cache_last_block_height():
+    return await get_last_block_height()
+
 # WARNING: we are storing this in memory... memcached or similar would be better
 #          if volume starts to be too big.
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
@@ -154,7 +158,7 @@ async def address_list(request):
     """ Addresses view
     """
     last_height = await get_last_block_height()
-    addresses = await addresses_unspent_txs(last_height)
+    addresses = await addresses_unspent_txs(await cache_last_block_height())
     total_addresses = len(addresses)
     page = int(request.match_info.get('page', '1'))
     addresses = addresses[(page-1)*PER_PAGE_SUMMARY:((page-1)*PER_PAGE_SUMMARY)+PER_PAGE_SUMMARY]
@@ -201,7 +205,7 @@ async def view_address(request):
     if "summary" in mode:
         transactions = [await summarize_tx(tx, address) for tx in transactions]
     # reusing data from cache here... maybe we should do a search here too ?
-    unspent_info = (await addresses_unspent_info(last_height)).get(address, {})
+    unspent_info = (await addresses_unspent_info(await cache_last_block_height())).get(address, {})
 
     pagination = Pagination(page, per_page, tx_count)
 
