@@ -21,8 +21,12 @@ class Coin(BaseNulsData):
     def parse(self, buffer, cursor=0):
         pos, owner = read_by_length(buffer, cursor)
         cursor += pos
+
         if len(owner) > ADDRESS_LENGTH:
-            self.fromHash = owner[:-1]
+            val = (len(owner) - HASH_LENGTH)
+            if (val > 1):
+                raise ValueError("Long int for index found")
+            self.fromHash = owner[:HASH_LENGTH-len(owner)]
             self.fromIndex = owner[-1]
         else:
             self.address = owner
