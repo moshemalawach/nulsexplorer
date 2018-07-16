@@ -174,7 +174,7 @@ class Transaction(BaseNulsData):
             md['evidence'] = md['evidence'].hex()
 
         elif self.type == 9: # stop agent
-            md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH]
+            md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
             cursor += HASH_LENGTH
 
         return cursor
