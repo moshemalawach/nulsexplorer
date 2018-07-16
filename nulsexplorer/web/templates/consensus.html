@@ -30,7 +30,9 @@
             <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
               {{('stopped', 'running')[agent.status]}}
             </span>
-            {{agent.agentId}}
+            <a href="/consensus/node/{{agent.agentHash}}" class="text-white">
+              {{agent.agentId}}
+            </a>
         </div>
           <div class="progress" style="height: 2px">
             <div class="progress-bar progress-bar-striped progress-bar-animated {{progressclass}}" role="progressbar"

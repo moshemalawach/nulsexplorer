@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% from "macros.html" import transaction_detail with context %}
+{% from "macros.html" import paginate with context %}
+{% block title %}Block #{{block.height}}{% endblock %}
+{% block content %}
+<h2>Node detail - {{agent.agentName or agent.agentAddress}}
+  <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
+    {{('stopped', 'running')[agent.status]}}
+  </span>
+</h2>
+<h3>{{transaction.hash}} - {{agent.agentId}}</h3>
+<div class="row">
+  <div class="col-sm">
+    <table class="table table-sm table-striped">
+      <tbody>
+        <tr>
+          <th scope="col" colspan="2">Summary</th>
+        </tr>
+        <tr>
+          <td>Creation time</td>
+          <td class="text-right">{{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}</td>
+        </tr>
+        <tr>
+          <td>Commission</td>
+          <td class="text-right">{{agent.commissionRate}}%</td>
+        </tr>
+        <tr>
+          <td>Bond</td>
+          <td class="text-right">{{transaction.info.deposit/100000000}} <i class="nuls"></td>
+        </tr>
+        <tr>
+          <td>Participants</td>
+          <td class="text-right">{{agent.memberCount}}</td>
+        </tr>
+        <tr>
+          <td>Total entrusted</td>
+          <td class="text-right">{{"%0.2f" % (agent.totalDeposit/100000000)}} <i class="nuls"></i></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="col-sm">
+      <table class="table table-sm table-striped">
+        <tbody>
+          <tr>
+            <th scope="col" colspan="2">Hashes</th>
+          </tr>
+          <tr>
+            <td>Transaction hash</td>
+            <td class="text-right">{{transaction.hash}}</td>
+          </tr>
+          <tr>
+            <td>Transaction Block hash</td>
+            <td class="text-right">
+              <a href="/blocks/{{block.hash}}">
+                {{block.hash}}
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td>Agent Address</td>
+            <td class="text-right">
+              <a href="/addresses/{{transaction.info.agentAddress}}">
+                {{transaction.info.agentAddress}}
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td>Packing Address</td>
+            <td class="text-right">
+              <a href="/addresses/{{transaction.info.packingAddress}}">
+                {{transaction.info.packingAddress}}
+              </a>
+            </td>
+          </tr>
+          <tr>
+            <td>Reward Address</td>
+            <td class="text-right">
+              <a href="/addresses/{{transaction.info.rewardAddress}}">
+                {{transaction.info.rewardAddress}}
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+{% endblock %}
