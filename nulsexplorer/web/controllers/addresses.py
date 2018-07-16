@@ -118,14 +118,16 @@ async def summarize_tx(tx, pov):
         tx['value'] = output_values[pov]
         tx['target'] = pov
 
-    elif tx['type'] == 2:
+    elif tx['type'] in [2, 3]:
         tx['value'] = (output_values[pov] - input_values[pov])
         if tx['value'] > 0:
-            tx['display_type'] = 'IN'
+            if tx['type'] == 2:
+                tx['display_type'] = 'IN'
             tx['source'] = inputs[0]['address']
             tx['target'] = pov
         elif tx['value'] < 1:
-            tx['display_type'] = 'OUT'
+            if tx['type'] == 2:
+                tx['display_type'] = 'OUT'
             tx['source'] = pov
             if len(output_values.keys()) <= 2:
                 for addr, val in output_values.items():

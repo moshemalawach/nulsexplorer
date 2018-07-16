@@ -95,7 +95,7 @@
       </td>
       <td>
         <span class="badge {% if transaction.display_type == 'IN' %}badge-success{% elif transaction.display_type == 'OUT' %}badge-warning{% else %}badge-primary{% endif %}">
-          {{transaction.display_type}}
+          {{transaction.display_type}}{% if transaction.info.get('alias', None) %} {{transaction.info.alias}}{% endif %}
         </span>
       </td>
       <td>{{transaction.value != None and "%0.3f"%(transaction.value/100000000) or ''}}</td>
