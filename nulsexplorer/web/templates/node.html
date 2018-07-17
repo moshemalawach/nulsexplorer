@@ -6,7 +6,7 @@
 {% block content %}
 <h2>Node detail - {{agent and (agent.agentName or agent.agentAddress) or transaction.info.agentAddress}}
   <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
-    {{('stopped', 'running')[agent.status]}}
+    {{('waiting', 'running')[agent.status]}}
   </span>
 </h2>
 <h3>{{transaction.hash}} - {{agent.agentId}}</h3>

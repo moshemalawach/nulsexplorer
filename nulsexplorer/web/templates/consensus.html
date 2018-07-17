@@ -28,7 +28,7 @@
       <div class="card mb-5 mx-2 {{cardclass}}">
         <div class="card-header">
             <span class="float-right badge {{('badge-warning', 'badge-success')[agent.status]}}">
-              {{('stopped', 'running')[agent.status]}}
+              {{('waiting', 'running')[agent.status]}}
             </span>
             <a href="/consensus/node/{{agent.agentHash}}" class="text-white">
               {{agent.agentId}}
