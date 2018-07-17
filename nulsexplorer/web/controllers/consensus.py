@@ -1,11 +1,12 @@
 import aiohttp_jinja2
+from aiohttp import web
+from aiocache import cached, SimpleMemoryCache
 from nulsexplorer.model.consensus import Consensus
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from nulsexplorer.web.controllers.addresses import summarize_tx
-from aiocache import cached, SimpleMemoryCache
 from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
@@ -55,39 +56,58 @@ async def view_node(request):
     last_height = await get_last_block_height()
     txhash = request.match_info['hash']
     transaction = await Transaction.find_one(hash = txhash)
+    if transaction is None:
+        raise web.HTTPNotFound(text="Transaction not found")
     block = await find_block({'height': transaction['blockHeight']})
     consensus = await Consensus.collection.find_one(sort=[('height', -1)])
-    
+
     agent = None
-    if agent in [a['agentHash'] for a in consensus['agents']]:
+    if txhash in [a['agentHash'] for a in consensus['agents']]:
         agent = [a for a in consensus['agents'] if a['agentHash'] == txhash][0]
 
     mode = request.match_info.get('mode', 'summary')
-    if mode not in ['stats', 'summary', 'detail']:
+    if mode not in ['stats', 'summary', 'cards-summary', 'detail']:
         raise web.HTTPNotFound(text="Display mode not found")
     per_page = PER_PAGE
     if "summary" in mode:
         per_page = PER_PAGE_SUMMARY
 
     page = int(request.match_info.get('page', '1'))
-    where_query = {'$or':
-                    [{'$and': [
-                        {'type': 9}, # unregister
-                        {'info.createTxHash': txhash}
-                     ]},
-                     {'$and': [
-                         {'type': 5}, # join
-                         {'info.agentHash': txhash}
-                     ]},
-                     {'$and': [
-                         {'type': 6}, # leave
-                         {'info.agentHash': txhash}
-                     ]},
-                     {'$and': [
-                         {'type': 4}, # register
-                         {'hash': txhash}
-                     ]}]}
+    if mode == 'cards-summary':
+        where_query = {'$or':
+                        [{'$and': [
+                            {'type': 7}, # yellow card
+                            {'info.addresses': transaction['info']['agentAddress']}
+                         ]},
+                         {'$and': [
+                             {'type': 8}, # red card
+                             {'info.address':  transaction['info']['agentAddress']}
+                         ]}
+                        ]}
+    else:
+        where_query = {'$or':
+                        [{'$and': [
+                            {'type': 9}, # unregister
+                            {'info.createTxHash': txhash}
+                         ]},
+                         {'$and': [
+                             {'type': 5}, # join
+                             {'info.agentHash': txhash}
+                         ]},
+                         {'$and': [
+                             {'type': 6}, # leave
+                             {'info.agentHash': txhash}
+                         ]},
+                         {'$and': [
+                             {'type': 4}, # register
+                             {'hash': txhash}
+                         ]},
+                         {'$and': [
+                             {'type': 3}, # register
+                             {'inputs.address': transaction['info']['agentAddress']}
+                         ]}]}
     tx_count = await Transaction.count(where_query)
+    print(tx_count)
 
     transactions = [tx async for tx in Transaction.find(where_query,
                                                         sort='time',
@@ -95,7 +115,10 @@ async def view_node(request):
                                                         limit=per_page,
                                                         skip=(page-1)*per_page)]
     if "summary" in mode:
-        transactions = [await summarize_tx(tx, transaction['info']['agentAddress']) for tx in transactions]
+        transactions = [await summarize_tx(tx,
+                                           transaction['info']['agentAddress'],
+                                           node_mode=True)
+                        for tx in transactions]
 
     pagination = Pagination(page, per_page, tx_count)
 
