@@ -8,6 +8,11 @@
       {{transaction.hash}}
     </a>
     <span class="badge badge-primary">{{TRANSACTION_TYPES[transaction.type]}}</span>
+    {% if transaction.info.agentHash or transaction.info.createTxHash %}
+      <a href="/consensus/node/{{transaction.info.agentHash or transaction.info.createTxHash}}">
+         <span class="badge badge-secondary text-white">Consensus Node 🏦</span>
+       </a>
+    {% endif %}
   </div>
   {% if (len(transaction.outputs) or len(transaction.inputs)) %}
     <div class="card-body">
@@ -72,7 +77,7 @@
 </div>
 {%- endmacro %}
 
-{% macro transaction_summary(transaction) -%}
+{% macro transaction_summary(transaction, from_node=False) -%}
 <tr>
   <td class="cell-20 cell-ellipsis"><a href="/transactions/{{transaction.hash}}">{{transaction.hash}}</a></td>
   <td>{{transaction.blockHeight}}</td>
@@ -95,6 +100,11 @@
     <span class="badge {% if transaction.display_type == 'IN' %}badge-success{% elif transaction.display_type == 'OUT' %}badge-warning{% else %}badge-primary{% endif %}">
       {{transaction.display_type}}{% if transaction.info.get('alias', None) %} {{transaction.info.alias}}{% endif %}
     </span>
+    {% if (transaction.info.agentHash or transaction.info.createTxHash) and not from_node %}
+      <a href="/consensus/node/{{transaction.info.agentHash or transaction.info.createTxHash}}">
+         <span class="badge badge-secondary text-white">🏦</span>
+       </a>
+    {% endif %}
   </td>
   <td>{{transaction.value != None and "%0.3f"%(transaction.value/100000000) or ''}}</td>
   <td>{{transaction.fee/100000000}}</td>
