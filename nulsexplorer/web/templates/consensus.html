@@ -76,6 +76,9 @@
                 Blocks packed last day:
                 <span class="d-inline-block text-truncate">{{total_day.get(agent.packingAddress, 0)}} / {{"{0:.2f}%".format((total_day.get(agent.packingAddress, 0)/8640)*100)}}</span>
               </li>
+              <li class="list-group-item list-group-item-action text-right">
+                <a class="text-dark" href="/consensus/node/{{agent.agentHash}}">View details <i class="fa fa-angle-double-right"></i></a>
+              </li>
             </ul>
       </div>
     </div>
