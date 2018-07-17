@@ -94,7 +94,7 @@ async def addresses_unspent_info(last_block_height):
     return {info['_id']: info
             for info in unspent_info}
 
-async def summarize_tx(tx, pov):
+async def summarize_tx(tx, pov, node_mode=False):
     """ Summarizes a TX, trying to understand the context.
     POV is an address as the point of view.
     """
@@ -122,7 +122,7 @@ async def summarize_tx(tx, pov):
         tx['value'] = output_values[pov]
         tx['target'] = pov
 
-    elif tx['type'] in [2, 3]:
+    elif tx['type'] in [2, 3] and not node_mode:
         tx['value'] = (output_values[pov] - input_values[pov])
         if tx['value'] > 0:
             if tx['type'] == 2:
@@ -142,13 +142,31 @@ async def summarize_tx(tx, pov):
             tx['display_type'] = '???'
 
     elif tx['type'] in [4, 5]:
+        addr = inputs[0]['address']
+        if tx['info'].get('address'):
+            addr = tx['info']['address']
+            
+        tx['source'] = addr
+
         for o in outputs:
             if o['lockTime'] == -1:
                 tx['value'] = o['value']
                 break
 
+
     elif tx['type'] in [6, 9]:
+        addr = inputs[0]['address']
+        if tx['info'].get('address'):
+            addr = tx['info']['address']
+
+        if node_mode:
+            tx['target'] = addr
+        else:
+            tx['source'] = addr
+
         tx['value'] = inputs[0]['value']
+        if node_mode:
+            tx['value'] = tx['value']*-1
 
     return tx
 
