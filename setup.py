@@ -20,7 +20,7 @@ setup(name='nulsexplorer',
       install_requires=[
           # -*- Extra requirements: -*-
           "pymongo",
-          "motor",
+          "motor==1.2.2",
           "aiohttp>=3.3.2",
           "aiohttp-session[secure]",
           "aiohttp-jinja2",
