@@ -7,7 +7,7 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (get_last_block_height)
 import datetime
 import time
-from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY
+from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output
 
 from aiocache import cached, SimpleMemoryCache
 
@@ -145,7 +145,7 @@ async def summarize_tx(tx, pov, node_mode=False):
         addr = inputs[0]['address']
         if tx['info'].get('address'):
             addr = tx['info']['address']
-            
+
         tx['source'] = addr
 
         for o in outputs:
@@ -181,7 +181,7 @@ async def get_aliases():
          {'$sort': {'_id': 1}}])
     return [item async for item in aggregate]
 
-@aiohttp_jinja2.template('aliases.html')
+#@aiohttp_jinja2.template('aliases.html')
 async def aliases(request):
     """ Addresses view
     """
@@ -193,13 +193,22 @@ async def aliases(request):
 
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_aliases)
 
-    return {'aliases': aliases,
+    context =  {'aliases': aliases,
             'pagination': pagination,
-            'last_height': last_height}
+            'last_height': last_height,
+            'pagination_page': page,
+            'pagination_total': total_aliases,
+            'pagination_per_page': PER_PAGE_SUMMARY,
+            'pagination_item': 'aliases'}
+
+    return cond_output(request, context, 'aliases.html')
+
+app.router.add_get('/addresses/aliases.json', aliases)
 app.router.add_get('/addresses/aliases', aliases)
+app.router.add_get('/addresses/aliases/page/{page}.json', aliases)
 app.router.add_get('/addresses/aliases/page/{page}', aliases)
 
-@aiohttp_jinja2.template('addresses.html')
+#@aiohttp_jinja2.template('addresses.html')
 async def address_list(request):
     """ Addresses view
     """
@@ -211,13 +220,22 @@ async def address_list(request):
 
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_addresses)
 
-    return {'addresses': addresses,
-            'pagination': pagination,
-            'last_height': last_height}
-app.router.add_get('/addresses', address_list)
-app.router.add_get('/addresses/page/{page}', address_list)
+    context = {'addresses': addresses,
+              'pagination': pagination,
+              'last_height': last_height,
+              'pagination_page': page,
+              'pagination_total': total_addresses,
+              'pagination_per_page': PER_PAGE_SUMMARY,
+              'pagination_item': 'addresses'}
 
-@aiohttp_jinja2.template('address.html')
+    return cond_output(request, context, 'addresses.html')
+
+app.router.add_get('/addresses', address_list)
+app.router.add_get('/addresses.json', address_list)
+app.router.add_get('/addresses/page/{page}', address_list)
+app.router.add_get('/addresses/page/{page}.json', address_list)
+
+#@aiohttp_jinja2.template('address.html')
 async def view_address(request):
     """ Address view
     """
@@ -242,7 +260,7 @@ async def view_address(request):
         ]}
     tx_count = await Transaction.count(where_query)
 
-    transactions = [tx async for tx in Transaction.find(where_query,
+    transactions = [tx._data async for tx in Transaction.find(where_query,
                                                         sort='time',
                                                         sort_order=-1,
                                                         limit=per_page,
@@ -255,15 +273,25 @@ async def view_address(request):
 
     pagination = Pagination(page, per_page, tx_count)
 
-    return {'address': address,
-            'transactions': transactions,
-            'pagination': pagination,
-            'unspent_info': unspent_info,
-            'last_height': last_height,
-            'tx_count': tx_count,
-            'mode': mode}
+    context = {'address': address,
+               'transactions': transactions,
+               'pagination': pagination,
+               'unspent_info': unspent_info,
+               'last_height': last_height,
+               'tx_count': tx_count,
+               'mode': mode,
+               'pagination_page': page,
+               'pagination_total': tx_count,
+               'pagination_per_page': per_page,
+               'pagination_item': 'transactions'}
 
+    return cond_output(request, context, 'address.html')
+
+app.router.add_get('/addresses/{address}.json', view_address)
 app.router.add_get('/addresses/{address}', view_address)
+app.router.add_get('/addresses/{address}/{mode}.json', view_address)
 app.router.add_get('/addresses/{address}/{mode}', view_address)
+app.router.add_get('/addresses/{address}/page/{page}.json', view_address)
 app.router.add_get('/addresses/{address}/page/{page}', view_address)
+app.router.add_get('/addresses/{address}/{mode}/page/{page}.json', view_address)
 app.router.add_get('/addresses/{address}/{mode}/page/{page}', view_address)

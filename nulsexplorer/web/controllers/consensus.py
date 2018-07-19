@@ -7,7 +7,7 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from nulsexplorer.web.controllers.addresses import summarize_tx
-from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY
+from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def get_packer_stats(last_height):
@@ -40,16 +40,20 @@ async def view_consensus(request):
     active_count = len([a for a in consensus['agents'] if a['status'] == 1])
     totals_all, totals_hour, totals_day = await get_packer_stats(last_height)
 
-    return {'consensus': consensus,
+    context = {'consensus': consensus,
             'last_height': last_height,
             'total_all': totals_all,
             'total_hour': totals_hour,
             'total_day': totals_day,
             'node_count': node_count,
             'active_count': active_count}
+
+    return cond_output(request, context, 'consensus.html')
+
+app.router.add_get('/consensus.json', view_consensus)
 app.router.add_get('/consensus', view_consensus)
 
-@aiohttp_jinja2.template('node.html')
+#@aiohttp_jinja2.template('node.html')
 async def view_node(request):
     """ Node view
     """
@@ -109,7 +113,7 @@ async def view_node(request):
     tx_count = await Transaction.count(where_query)
     print(tx_count)
 
-    transactions = [tx async for tx in Transaction.find(where_query,
+    transactions = [tx._data async for tx in Transaction.find(where_query,
                                                         sort='time',
                                                         sort_order=-1,
                                                         limit=per_page,
@@ -122,17 +126,27 @@ async def view_node(request):
 
     pagination = Pagination(page, per_page, tx_count)
 
-    return {'agent': agent,
-            'transaction': transaction,
+    context = {'agent': agent,
+            'transaction': transaction._data,
             'block': block,
             'consensus': consensus,
             'transactions': transactions,
             'pagination': pagination,
             'last_height': last_height,
             'tx_count': tx_count,
-            'mode': mode}
+            'mode': mode,
+            'pagination_page': page,
+            'pagination_total': tx_count,
+            'pagination_per_page': per_page,
+            'pagination_item': 'transactions'}
 
+    return cond_output(request, context, 'node.html')
+
+app.router.add_get('/consensus/node/{hash}.json', view_node)
 app.router.add_get('/consensus/node/{hash}', view_node)
+app.router.add_get('/consensus/node/{hash}/{mode}.json', view_node)
 app.router.add_get('/consensus/node/{hash}/{mode}', view_node)
+app.router.add_get('/consensus/node/{hash}/page/{page}.json', view_node)
 app.router.add_get('/consensus/node/{hash}/page/{page}', view_node)
+app.router.add_get('/consensus/node/{hash}/{mode}/page/{page}.json', view_node)
 app.router.add_get('/consensus/node/{hash}/{mode}/page/{page}', view_node)

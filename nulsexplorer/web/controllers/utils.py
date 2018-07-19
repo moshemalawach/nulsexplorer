@@ -1,4 +1,8 @@
+import aiohttp_jinja2
+from aiohttp import web
+from bson import json_util
 from math import ceil
+import json
 PER_PAGE = 20
 PER_PAGE_SUMMARY = 50
 
@@ -32,3 +36,15 @@ class Pagination(object):
                     yield None
                 yield num
                 last = num
+
+
+def cond_output(request, context, template):
+    if request.rel_url.path.endswith('.json'):
+        if 'pagination' in context:
+            context.pop('pagination')
+        response = web.json_response(context, dumps=lambda v: json.dumps(v, default=json_util.default))
+    else:
+        response = aiohttp_jinja2.render_template(template,
+                                                  request,
+                                                  context)
+    return response

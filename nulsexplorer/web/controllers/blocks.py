@@ -4,11 +4,11 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from aiohttp import web
-from .utils import Pagination, PER_PAGE
+from .utils import Pagination, PER_PAGE, cond_output
 
 
 
-@aiohttp_jinja2.template('block.html')
+#@aiohttp_jinja2.template('block.html')
 async def view_block(request):
     """ Block view
     """
@@ -18,34 +18,52 @@ async def view_block(request):
     if block is None:
         raise web.HTTPNotFound(text="Block not found")
 
-    transactions = [item async
+    transactions = [item._data async
                     for item in Transaction.find({'blockHeight': block['height']},
                                                  limit=PER_PAGE,
                                                  skip=(page-1)*PER_PAGE)]
     pagination = Pagination(page, PER_PAGE, block['txCount'])
 
-    return {'block': block,
-            'pagination': pagination,
-            'transactions': transactions,
-            'last_height': await get_last_block_height()}
+    context = {'block': block,
+                'pagination': pagination,
+                'transactions': transactions,
+                'last_height': await get_last_block_height(),
+                'pagination_page': page,
+                'pagination_total': block['txCount'],
+                'pagination_per_page': PER_PAGE,
+                'pagination_item': 'transactions'}
+
+    return cond_output(request, context, 'block.html')
+
+app.router.add_get('/blocks/{block_hash}.json', view_block)
 app.router.add_get('/blocks/{block_hash}', view_block)
+app.router.add_get('/blocks/{block_hash}/page/{page}.json', view_block)
 app.router.add_get('/blocks/{block_hash}/page/{page}', view_block)
 
-@aiohttp_jinja2.template('blocks.html')
+#@aiohttp_jinja2.template('blocks.html')
 async def block_list(request):
     """ Blocks view
     """
 
     total_blocks = await Block.count()
     page = int(request.match_info.get('page', '1'))
-    blocks = [block async for block
+    blocks = [block._data async for block
               in Block.find({}, limit=PER_PAGE, skip=(page-1)*PER_PAGE,
                             sort=[('height', -1)])]
 
     pagination = Pagination(page, PER_PAGE, total_blocks)
 
-    return {'blocks': blocks,
-            'pagination': pagination,
-            'last_height': await get_last_block_height()}
+    context = {'blocks': blocks,
+                'pagination': pagination,
+                'last_height': await get_last_block_height(),
+                'pagination_page': page,
+                'pagination_total':total_blocks,
+                'pagination_per_page': PER_PAGE,
+                'pagination_item': 'blocks'}
+
+    return cond_output(request, context, 'blocks.html')
+
+app.router.add_get('/blocks.json', block_list)
 app.router.add_get('/blocks', block_list)
+app.router.add_get('/blocks/page/{page}.json', block_list)
 app.router.add_get('/blocks/page/{page}', block_list)
