@@ -25,8 +25,9 @@ app = web.Application()
 auth = None
 
 tpl_path = pkg_resources.resource_filename('nulsexplorer.web', 'templates')
+JINJA_LOADER = jinja2.FileSystemLoader(tpl_path)
 aiohttp_jinja2.setup(app,
-    loader=jinja2.FileSystemLoader(tpl_path))
+    loader=JINJA_LOADER)
 env = aiohttp_jinja2.get_env(app)
 env.globals.update({
     'app': app,
