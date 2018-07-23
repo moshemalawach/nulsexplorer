@@ -28,6 +28,41 @@ async def get_packer_stats(last_height):
 
     return (totals_all, totals_hour, totals_day)
 
+@cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
+async def get_consensus_stats(last_height, periods=96):
+    heights = list(reversed([last_height-(v*6*60) for v in range(periods)]))
+    item_query = {'$group' : {
+      '_id' : '$height',
+      'totalDeposit' : {'$sum' : '$agents.totalDeposit'},
+      'activeNodes': {'$sum': {'$cond': [
+        {'$eq': ['$agents.status', 1]}, 1, 0
+        ]}}
+      }}
+
+    values = Consensus.collection.aggregate([
+        {'$match': {'height': {'$in': heights}}},
+        #{'$match': {'height': {'$gte': last_height-(days*8640)}}},
+        {'$unwind': '$agents'},
+        item_query,
+        {'$sort': {'_id': 1} }
+        # {'$group':
+        #     {
+        #         '_id':
+        #         {
+        #             '$subtract': [
+        #                 '$_id',
+        #                 {'$mod': ['$_id', 8640]}
+        #             ]
+        #         },
+        #         'height': {'$last': '$_id'},
+        #         'totalDeposit': {'$avg': '$totalDeposit'},
+        #         'activeNodes': {'$avg': '$activeNodes'}
+        #     }
+        # }
+    ])
+
+    return [v async for v in values]
+
 @aiohttp_jinja2.template('consensus.html')
 async def view_consensus(request):
     """ Address view
@@ -37,16 +72,26 @@ async def view_consensus(request):
 
     #db.blocks.aggregate({$match: {'height': {'$gt': 40000}}},     )
     node_count = len(consensus['agents'])
+    total_deposit = sum([a['totalDeposit'] for a in consensus['agents']])
     active_count = len([a for a in consensus['agents'] if a['status'] == 1])
     totals_all, totals_hour, totals_day = await get_packer_stats(last_height)
 
+    stats = await get_consensus_stats(last_height)
+    stats_heights = [s['_id'] for s in stats]
+    stats_stacked_values = [int(s['totalDeposit']/100000000000) for s in stats] # in KNuls
+    stats_active_nodes = [s['activeNodes'] for s in stats]
     context = {'consensus': consensus,
             'last_height': last_height,
             'total_all': totals_all,
             'total_hour': totals_hour,
             'total_day': totals_day,
             'node_count': node_count,
-            'active_count': active_count}
+            'active_count': active_count,
+            'total_deposit': total_deposit,
+            'stats': stats,
+            'stats_heights': stats_heights,
+            'stats_stacked_values': stats_stacked_values,
+            'stats_active_nodes': stats_active_nodes}
 
     return cond_output(request, context, 'consensus.html')
 
