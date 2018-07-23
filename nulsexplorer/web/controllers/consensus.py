@@ -29,7 +29,7 @@ async def get_packer_stats(last_height):
     return (totals_all, totals_hour, totals_day)
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
-async def get_consensus_stats(last_height, periods=96):
+async def get_consensus_stats(last_height, periods=96, hash=None):
     heights = list(reversed([last_height-(v*6*60) for v in range(periods)]))
     item_query = {'$group' : {
       '_id' : '$height',
@@ -38,8 +38,7 @@ async def get_consensus_stats(last_height, periods=96):
         {'$eq': ['$agents.status', 1]}, 1, 0
         ]}}
       }}
-
-    values = Consensus.collection.aggregate([
+    steps = [
         {'$match': {'height': {'$in': heights}}},
         #{'$match': {'height': {'$gte': last_height-(days*8640)}}},
         {'$unwind': '$agents'},
@@ -59,7 +58,12 @@ async def get_consensus_stats(last_height, periods=96):
         #         'activeNodes': {'$avg': '$activeNodes'}
         #     }
         # }
-    ])
+    ]
+
+    if hash is not None:
+        steps.insert(2, {'$match': {'agents.agentHash': hash}})
+
+    values = Consensus.collection.aggregate(steps)
 
     return [v async for v in values]
 
@@ -114,6 +118,10 @@ async def view_node(request):
     if txhash in [a['agentHash'] for a in consensus['agents']]:
         agent = [a for a in consensus['agents'] if a['agentHash'] == txhash][0]
 
+    stats = await get_consensus_stats(last_height, hash=txhash)
+    stats_heights = [s['_id'] for s in stats]
+    stats_stacked_values = [int(s['totalDeposit']/100000000000) for s in stats] # in KNuls
+
     mode = request.match_info.get('mode', 'summary')
     if mode not in ['stats', 'summary', 'cards-summary', 'detail']:
         raise web.HTTPNotFound(text="Display mode not found")
@@ -156,7 +164,6 @@ async def view_node(request):
                              {'inputs.address': transaction['info']['agentAddress']}
                          ]}]}
     tx_count = await Transaction.count(where_query)
-    print(tx_count)
 
     transactions = [tx._data async for tx in Transaction.find(where_query,
                                                         sort='time',
@@ -183,7 +190,10 @@ async def view_node(request):
             'pagination_page': page,
             'pagination_total': tx_count,
             'pagination_per_page': per_page,
-            'pagination_item': 'transactions'}
+            'pagination_item': 'transactions',
+            'stats': stats,
+            'stats_heights': stats_heights,
+            'stats_stacked_values': stats_stacked_values}
 
     return cond_output(request, context, 'node.html')
 
