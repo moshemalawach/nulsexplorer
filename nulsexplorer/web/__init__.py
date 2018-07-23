@@ -49,6 +49,3 @@ Jinja2Template.defaults = {
     'app': app,
     'enumerate': enumerate
 }"""
-
-
-import nulsexplorer.web.controllers

@@ -3,6 +3,8 @@ import configparser
 from aiohttp_session import setup as session_setup
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
+import nulsexplorer.web.controllers
+
 from nulsexplorer.web import app
 from nulsexplorer import model
 from nulsexplorer.jobs import start_jobs
