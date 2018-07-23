@@ -35,5 +35,7 @@ def init_db(ensure_indexes=True):
         #ensure_indexes(sync_db)
         from nulsexplorer.model.transactions import Transaction
         from nulsexplorer.model.blocks import Block
+        from nulsexplorer.model.consensus import Consensus
         Block.ensure_indexes(sync_db)
         Transaction.ensure_indexes(sync_db)
+        Consensus.ensure_indexes(sync_db)
