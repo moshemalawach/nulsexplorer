@@ -1,18 +1,21 @@
 {% macro transaction_detail(transaction) -%}
 <div class="card mb-3">
-  <div class="card-header">
-    <span class="float-right">
+  <div class="card-header d-flex">
+    <div class="flex-grow-1">
+      <a href="/transactions/{{transaction.hash}}">
+        {{transaction.hash}}
+      </a>
+
+      <span class="badge badge-primary">{{TRANSACTION_TYPES[transaction.type]}}</span>
+      {% if transaction.info.agentHash or transaction.info.createTxHash %}
+        <a href="/consensus/node/{{transaction.info.agentHash or transaction.info.createTxHash}}">
+           <span class="badge badge-secondary text-white">Consensus Node 🏦</span>
+         </a>
+      {% endif %}
+    </div>
+    <div class="text-right">
       {{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}
-    </span>
-    <a href="/transactions/{{transaction.hash}}">
-      {{transaction.hash}}
-    </a>
-    <span class="badge badge-primary">{{TRANSACTION_TYPES[transaction.type]}}</span>
-    {% if transaction.info.agentHash or transaction.info.createTxHash %}
-      <a href="/consensus/node/{{transaction.info.agentHash or transaction.info.createTxHash}}">
-         <span class="badge badge-secondary text-white">Consensus Node 🏦</span>
-       </a>
-    {% endif %}
+    </div>
   </div>
   {% if (len(transaction.outputs) or len(transaction.inputs)) %}
     <div class="card-body">
