@@ -1,4 +1,5 @@
 import struct
+import base64
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         write_with_length, read_by_length,
                                         writeUint48, readUint48,
@@ -217,7 +218,7 @@ class Transaction(BaseNulsData):
         try:
             remark = self.remark and self.remark.decode('utf-8') or None
         except UnicodeDecodeError:
-            remark = None
+            remark = base64.b64encode(self.remark).decode("utf-8")
 
         return {
             'hash': str(self.hash),
