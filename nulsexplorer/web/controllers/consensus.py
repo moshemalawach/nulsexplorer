@@ -34,6 +34,7 @@ async def get_consensus_stats(last_height, periods=96, hash=None):
     item_query = {'$group' : {
       '_id' : '$height',
       'totalDeposit' : {'$sum' : '$agents.totalDeposit'},
+      'deposit' : {'$sum' : '$agents.deposit'},
       'activeNodes': {'$sum': {'$cond': [
         {'$eq': ['$agents.status', 1]}, 1, 0
         ]}}
@@ -76,13 +77,13 @@ async def view_consensus(request):
 
     #db.blocks.aggregate({$match: {'height': {'$gt': 40000}}},     )
     node_count = len(consensus['agents'])
-    total_deposit = sum([a['totalDeposit'] for a in consensus['agents']])
+    total_deposit = sum([a['totalDeposit'] + a['deposit'] for a in consensus['agents']])
     active_count = len([a for a in consensus['agents'] if a['status'] == 1])
     totals_all, totals_hour, totals_day = await get_packer_stats(last_height)
 
     stats = await get_consensus_stats(last_height)
     stats_heights = [s['_id'] for s in stats]
-    stats_stacked_values = [int(s['totalDeposit']/100000000000) for s in stats] # in KNuls
+    stats_stacked_values = [int((s['totalDeposit']+s['deposit'])/100000000000) for s in stats] # in KNuls
     stats_active_nodes = [s['activeNodes'] for s in stats]
     context = {'consensus': consensus,
             'last_height': last_height,
