@@ -121,7 +121,7 @@ async def view_node(request):
 
     stats = await get_consensus_stats(last_height, hash=txhash)
     stats_heights = [s['_id'] for s in stats]
-    stats_stacked_values = [int(s['totalDeposit']/100000000000) for s in stats] # in KNuls
+    stats_stacked_values = [int((s['totalDeposit']+s['deposit'])/100000000000) for s in stats] # in KNuls
 
     mode = request.match_info.get('mode', 'summary')
     if mode not in ['stats', 'summary', 'cards-summary', 'detail']:
