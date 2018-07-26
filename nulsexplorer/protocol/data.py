@@ -102,7 +102,7 @@ def write_with_length(buffer):
     if len(buffer) < 253:
         return bytes([len(buffer)]) + buffer
     else:
-        return VarInt(buffer).encode()
+        return VarInt(buffer).encode() + buffer
 
 def readUint48(buffer, cursor=0):
     """ wtf...
