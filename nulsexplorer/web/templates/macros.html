@@ -119,7 +119,7 @@
   <ul class="pagination {{ulclass}}">
     {% if pagination.has_prev %}
       <li class="page-item">
-        <a class="page-link" href="{{base_url}}{{ pagination.page - 1 }}">&laquo; Previous</a>
+        <a class="page-link" href="{{base_url}}{{ pagination.page - 1 }}">&laquo; <span class="d-none d-lg-inline">Previous</span></a>
       </li>
     {% endif %}
     {%- for page in pagination.iter_pages() %}
@@ -135,7 +135,7 @@
     {%- endfor %}
     {% if pagination.has_next %}
       <li class="page-item">
-        <a class="page-link" href="{{base_url}}{{ pagination.page + 1 }}">Next &raquo;</a>
+        <a class="page-link" href="{{base_url}}{{ pagination.page + 1 }}"><span class="d-none d-lg-inline">Next</span> &raquo;</a>
       </li>
     {% endif %}
   </ul>
