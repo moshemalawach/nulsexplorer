@@ -1,5 +1,6 @@
 import struct
 import base64
+import hexlify
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         write_with_length, read_by_length,
                                         writeUint48, readUint48,
@@ -55,6 +56,19 @@ class Coin(BaseNulsData):
     def __repr__(self):
         return "<UTXO Coin: {}: {} - {}>".format((self.address or self.fromHash).hex(), self.na, self.lockTime)
 
+    def serialize(self):
+        output = b""
+        if self.fromHash is not None:
+            output += write_with_length(self.fromHash + bytes([self.fromIndex]))
+        elif self.address is not None:
+            output += write_with_length(self.address)
+        else:
+            raise ValueError("Either fromHash and fromId should be set or address.")
+
+        output += struct.pack("Q", self.na)
+        output += writeUint48(self.lockTime)
+        return output
+
 class CoinData(BaseNulsData):
     def __init__(self, data=None):
         self.from_count = None
@@ -97,6 +111,17 @@ class CoinData(BaseNulsData):
 
     def get_output_sum(self):
         return sum([o.na for o in self.outputs])
+
+    def serialize(self):
+        output = b""
+        output += VarInt(self.from_count).encode()
+        for coin in self.inputs:
+            output += coin.serialize()
+        output += VarInt(self.to_count).encode()
+        for coin in self.outputs:
+            output += coin.serialize()
+
+        return output
 
 class Transaction(BaseNulsData):
     def __init__(self, data=None, height=None):
@@ -233,3 +258,57 @@ class Transaction(BaseNulsData):
             'inputs': [utxo.to_dict() for utxo in self.coin_data.inputs],
             'outputs': [utxo.to_dict() for utxo in self.coin_data.outputs]
         }
+
+    def _write_data(self):
+        md = self.module_data
+        output = b""
+
+        if self.type == 1: # consensus reward
+            output += PLACE_HOLDER
+
+        elif self.type == 2: # tranfer
+            output += PLACE_HOLDER
+
+        elif self.type == 3: # alias
+            output += write_with_length(hash_from_address(md['address']))
+            output += write_with_length(md['alias'].encode('utf-8'))
+
+        elif self.type == 4: # register agent
+            output += struct.pack("Q", md['deposit'])
+            output += hash_from_address(md['agentAddress'])
+            output += hash_from_address(md['packingAddress'])
+            output += hash_from_address(md['rewardAddress'])
+            output += struct.pack("d", md['commissionRate'])
+
+        elif self.type == 5: # join consensus
+            output += struct.pack("Q", md['deposit'])
+            output += hash_from_address(md['address'])
+            output += binascii.unhexlify(md['agentHash'])
+
+        elif self.type == 6: # cancel deposit
+            output += binascii.unhexlify(md['joinTxHash'])
+
+        elif self.type == 7: # yellow card
+            output += VarInt(md['count']).encode()
+            for address in md['addresses']:
+                output += hash_from_address(address)
+
+        elif self.type == 8: # red card
+            output += write_with_length(hash_from_address(md['address']))
+            output += VarInt(md['reason']).encode()
+            output += write_with_length(binascii.unhexlify(md['evidence']))
+
+        elif self.type == 9: # stop agent
+            output += binascii.unhexlify(md['createTxHash'])
+
+        return cursor
+
+    def serialize(self):
+        output = b""
+        output += struct.pack("H", self.type)
+        output += writeUint48(self.time)
+        output += write_with_length(self.remark)
+        output += self._write_data()
+        output += self.coin_data.serialize()
+        output += write_with_length(self.scriptSig)
+        return output
