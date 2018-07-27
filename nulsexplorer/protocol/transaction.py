@@ -1,12 +1,13 @@
 import struct
 import base64
-import hexlify
+from binascii import hexlify, unhexlify
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         write_with_length, read_by_length,
                                         writeUint48, readUint48,
                                         writeUint32, writeUint64,
                                         writeVarInt, hash_twice, VarInt,
                                         address_from_hash,
+                                        hash_from_address,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
 
 class Coin(BaseNulsData):
@@ -283,10 +284,10 @@ class Transaction(BaseNulsData):
         elif self.type == 5: # join consensus
             output += struct.pack("Q", md['deposit'])
             output += hash_from_address(md['address'])
-            output += binascii.unhexlify(md['agentHash'])
+            output += unhexlify(md['agentHash'])
 
         elif self.type == 6: # cancel deposit
-            output += binascii.unhexlify(md['joinTxHash'])
+            output += unhexlify(md['joinTxHash'])
 
         elif self.type == 7: # yellow card
             output += VarInt(md['count']).encode()
@@ -296,10 +297,10 @@ class Transaction(BaseNulsData):
         elif self.type == 8: # red card
             output += write_with_length(hash_from_address(md['address']))
             output += VarInt(md['reason']).encode()
-            output += write_with_length(binascii.unhexlify(md['evidence']))
+            output += write_with_length(unhexlify(md['evidence']))
 
         elif self.type == 9: # stop agent
-            output += binascii.unhexlify(md['createTxHash'])
+            output += unhexlify(md['createTxHash'])
 
         return cursor
 
