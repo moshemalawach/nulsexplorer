@@ -24,6 +24,7 @@ setup(name='nulsexplorer',
           "aiohttp>=3.3.2",
           "aiohttp-session[secure]",
           "aiohttp-jinja2",
+          "aiohttp_cors",
           "aiocache",
           "pyyaml",
           "configmanager"
