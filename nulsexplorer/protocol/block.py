@@ -122,7 +122,10 @@ class Block(BaseNulsData):
         }
 
     def serialize(self):
-        return
+        output = b""
+        output += self.header.serialize()
+        for tx in self.transactions:
+            output += tx.serialize()
 
 def read_block_header(bytes):
     pass
