@@ -5,7 +5,7 @@ from aiohttp_session.cookie_storage import EncryptedCookieStorage
 
 import nulsexplorer.web.controllers
 
-from nulsexplorer.web import app
+from nulsexplorer.web import app, init_cors
 from nulsexplorer import model
 from nulsexplorer.jobs import start_jobs
 from nulsexplorer.config import get_defaults
@@ -38,6 +38,7 @@ def launch_explorer():
     from nulsexplorer.web.controllers.errors import setup_middlewares
     setup_middlewares(app)
 
+    init_cors()
 
     log_level = logging.INFO
     if args.debug:

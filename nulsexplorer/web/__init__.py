@@ -1,4 +1,5 @@
 from aiohttp import web
+import aiohttp_cors
 import aiohttp_jinja2
 import jinja2
 
@@ -23,6 +24,16 @@ from nulsexplorer import TRANSACTION_TYPES
 
 app = web.Application()
 auth = None
+
+# Configure default CORS settings.
+cors = aiohttp_cors.setup(app, defaults={
+    "*": aiohttp_cors.ResourceOptions(
+            allow_methods=["GET"],
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+})
 
 tpl_path = pkg_resources.resource_filename('nulsexplorer.web', 'templates')
 JINJA_LOADER = jinja2.ChoiceLoader([jinja2.FileSystemLoader(tpl_path),])
@@ -49,3 +60,9 @@ Jinja2Template.defaults = {
     'app': app,
     'enumerate': enumerate
 }"""
+
+
+def init_cors():
+    # Configure CORS on all routes.
+    for route in list(app.router.routes()):
+        cors.add(route)
