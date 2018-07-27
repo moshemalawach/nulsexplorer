@@ -1,6 +1,7 @@
 from hashlib import sha256
 from binascii import hexlify, unhexlify
 import six
+import time
 
 PLACE_HOLDER = b"\xFF\xFF\xFF\xFF"
 ADDRESS_LENGTH = 23
@@ -133,7 +134,10 @@ def write_with_length(buffer):
     if len(buffer) < 253:
         return bytes([len(buffer)]) + buffer
     else:
-        return VarInt(buffer).encode() + buffer
+        return VarInt(len(buffer)).encode() + buffer
+
+def timestamp_from_time(timedata):
+    return int(time.mktime(timedata.timetuple())*1000)
 
 def readUint48(buffer, cursor=0):
     """ wtf...
@@ -269,7 +273,7 @@ class VarInt:
         if size == 1:
             return bytes((self.value, ))
         elif size == 3:
-            return bytes((253, self.value, self.value >> 8))
+            return bytes((253, self.value&255, self.value >> 8))
         elif size == 5:
             return bytes((254, )) + writeUint32(self.value)
         else:

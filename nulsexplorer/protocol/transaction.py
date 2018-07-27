@@ -1,11 +1,13 @@
 import struct
 import base64
 from binascii import hexlify, unhexlify
+from datetime import datetime
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         write_with_length, read_by_length,
                                         writeUint48, readUint48,
                                         writeUint32, writeUint64,
                                         writeVarInt, hash_twice, VarInt,
+                                        timestamp_from_time,
                                         address_from_hash,
                                         hash_from_address,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
@@ -24,7 +26,6 @@ class Coin(BaseNulsData):
     def parse(self, buffer, cursor=0):
         pos, owner = read_by_length(buffer, cursor)
         cursor += pos
-
         if len(owner) > ADDRESS_LENGTH:
             val = (len(owner) - HASH_LENGTH)
             if (val > 1):
@@ -47,12 +48,26 @@ class Coin(BaseNulsData):
         }
         if self.address is not None:
             val['address'] = address_from_hash(self.address)
+            val['addressHash'] = self.address
 
         if self.fromHash is not None:
             val['fromHash'] = self.fromHash.hex()
             val['fromIndex'] = self.fromIndex
 
         return val
+
+    @classmethod
+    def from_dict(cls, value):
+        item = cls()
+        item.address = value.get('address', None)
+        item.fromHash = value.get('fromHash', None)
+        if item.fromHash is not None:
+            item.fromHash = unhexlify(item.fromHash)
+        item.fromIndex = value.get('fromIndex', None)
+        item.lockTime = value.get('lockTime', 0)
+        item.na = value.get('value', None)
+
+        return item
 
     def __repr__(self):
         return "<UTXO Coin: {}: {} - {}>".format((self.address or self.fromHash).hex(), self.na, self.lockTime)
@@ -115,10 +130,10 @@ class CoinData(BaseNulsData):
 
     def serialize(self):
         output = b""
-        output += VarInt(self.from_count).encode()
+        output += VarInt(len(self.inputs)).encode()
         for coin in self.inputs:
             output += coin.serialize()
-        output += VarInt(self.to_count).encode()
+        output += VarInt(len(self.outputs)).encode()
         for coin in self.outputs:
             output += coin.serialize()
 
@@ -132,6 +147,7 @@ class Transaction(BaseNulsData):
         self.height = height
         self.scriptSig = None
         self.module_data = dict()
+        self.coin_data = CoinData()
         if data is not None:
             self.parse(data)
 
@@ -206,6 +222,17 @@ class Transaction(BaseNulsData):
 
         return cursor
 
+    def get_hash(self):
+        values = bytes((self.type,)) \
+                + bytes((255,)) + writeUint64(self.time) \
+                + write_with_length(self.remark) \
+                + self._write_data() \
+                + self.coin_data.serialize()
+
+        hash_bytes = hash_twice(values)
+        hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
+        return hash
+
     def parse(self, buffer, cursor=0):
         st_cursor = cursor
         self.type = struct.unpack("H", buffer[cursor:cursor+2])[0]
@@ -260,6 +287,30 @@ class Transaction(BaseNulsData):
             'outputs': [utxo.to_dict() for utxo in self.coin_data.outputs]
         }
 
+    @classmethod
+    def from_dict(cls, value):
+        item = cls()
+        #item.hash = value.get('hash', '').encode('UTF-8')
+        item.type = value['type']
+        item.time = value.get('time')
+        if item.time is None:
+            item.time = timestamp_from_time(datetime.now())
+        item.height = value.get('blockHeight') # optionnal, when creating a tx.
+        item.remark = value.get('remark', b'')
+        item.scriptSig = value.get('scriptSig')
+        item.size = value.get('size')
+        item.info = value.get('info') # this should be fixed.
+
+        for input in value.get('inputs'):
+            item.coin_data.inputs.append(Coin.from_dict(input))
+        item.coin_data.from_count = len(item.coin_data.inputs)
+
+        for output in value.get('outputs'):
+            item.coin_data.outputs.append(Coin.from_dict(output))
+        item.coin_data.to_count = len(item.coin_data.outputs)
+
+        return item
+
     def _write_data(self):
         md = self.module_data
         output = b""
@@ -302,7 +353,7 @@ class Transaction(BaseNulsData):
         elif self.type == 9: # stop agent
             output += unhexlify(md['createTxHash'])
 
-        return cursor
+        return output
 
     def serialize(self):
         output = b""
@@ -311,5 +362,5 @@ class Transaction(BaseNulsData):
         output += write_with_length(self.remark)
         output += self._write_data()
         output += self.coin_data.serialize()
-        output += write_with_length(self.scriptSig)
+        output += self.scriptSig is not None and write_with_length(self.scriptSig) or PLACE_HOLDER
         return output
