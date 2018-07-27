@@ -5,8 +5,10 @@ from nulsexplorer import TRANSACTION_TYPES
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (get_last_block_height)
+from bson import json_util
 import datetime
 import time
+import json
 from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output
 
 from aiocache import cached, SimpleMemoryCache
@@ -286,6 +288,53 @@ async def view_address(request):
                'pagination_item': 'transactions'}
 
     return cond_output(request, context, 'address.html')
+
+
+
+async def address_available_outputs(request):
+    """ Returns the unspent available outputs for a given address.
+    Useful for light wallets.
+    """
+    last_height = await get_last_block_height()
+    check_time = datetime.datetime.now()
+    db_time = int(time.mktime(check_time.timetuple())*1000)
+    address = request.match_info['address']
+    all_txs = Transaction.collection.find(
+            {'outputs.status': {'$lt': 3},
+             'outputs.address': address})
+    outputs = []
+    async for tx in all_txs:
+        tx_hash = tx['hash']
+        for idx, output in enumerate(tx['outputs']):
+            lock_time = output['lockTime']
+            if output['address'] != address:
+                continue
+
+            if output['status'] >= 3:
+                continue # spent
+
+            if lock_time == -1:
+                continue # consensus locked
+
+            if (lock_time < 1000000000000) and (lock_time > last_height):
+                continue # time locked on a future block
+
+            if lock_time > db_time:
+                continue # time locked on a future time
+
+            outputs.append({
+                'hash': tx_hash,
+                'idx': idx,
+                'value': output['value']
+            })
+
+    context = {'outputs': outputs,
+               'last_height': last_height,
+               'totoal_available': sum([o['value'] for o in outputs])}
+    return web.json_response(context, dumps=lambda v: json.dumps(v,
+                                                     default=json_util.default))
+
+app.router.add_get('/addresses/outputs/{address}.json', address_available_outputs)
 
 app.router.add_get('/addresses/{address}.json', view_address)
 app.router.add_get('/addresses/{address}', view_address)
