@@ -36,8 +36,39 @@ def b58_encode(b):
 
     return B58_DIGITS[0] * pad + res
 
+def b58_decode(s):
+    """Decode a base58-encoding string, returning bytes"""
+    if not s:
+        return b''
+
+    # Convert the string to an integer
+    n = 0
+    for c in s:
+        n *= 58
+        if c not in B58_DIGITS:
+            raise ValueError('Character %r is not a valid base58 character' % c)
+        digit = B58_DIGITS.index(c)
+        n += digit
+
+    # Convert the integer to bytes
+    h = '%x' % n
+    if len(h) % 2:
+        h = '0' + h
+    res = unhexlify(h.encode('utf8'))
+
+    # Add padding back.
+    pad = 0
+    for c in s[:-1]:
+        if c == B58_DIGITS[0]: pad += 1
+        else: break
+
+    return b'\x00' * pad + res
+
 def address_from_hash(addr):
     return b58_encode(addr+bytes((getxor(addr), )))
+
+def hash_from_address(hash):
+    return b58_decode(hash)[:-1]
 
 class BaseNulsData:
     def _pre_parse(buffer, cursor=None, length=None):
