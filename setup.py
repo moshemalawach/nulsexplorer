@@ -27,7 +27,8 @@ setup(name='nulsexplorer',
           "aiohttp_cors",
           "aiocache",
           "pyyaml",
-          "configmanager"
+          "configmanager",
+          "secp256k1"
       ],
       entry_points={
           'console_scripts':

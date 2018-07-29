@@ -3,6 +3,7 @@ import base64
 from binascii import hexlify, unhexlify
 from datetime import datetime
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
+                                        NulsSignature,
                                         write_with_length, read_by_length,
                                         writeUint48, readUint48,
                                         writeUint32, writeUint64,
@@ -230,7 +231,7 @@ class Transaction(BaseNulsData):
                 + self.coin_data.serialize()
 
         hash_bytes = hash_twice(values)
-        hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
+        hash = NulsDigestData(data=hash_bytes, alg_type=0)
         return hash
 
     def parse(self, buffer, cursor=0):
@@ -354,6 +355,11 @@ class Transaction(BaseNulsData):
             output += unhexlify(md['createTxHash'])
 
         return output
+
+    def sign_tx(self, pri_key):
+        self.signature = NulsSignature.sign_data(pri_key,
+                                                 self.get_hash().digest_bytes)
+        self.scriptSig = self.signature.serialize()
 
     def serialize(self):
         output = b""

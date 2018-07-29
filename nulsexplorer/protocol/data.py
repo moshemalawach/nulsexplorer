@@ -1,5 +1,6 @@
 from hashlib import sha256
 from binascii import hexlify, unhexlify
+from secp256k1 import PrivateKey
 import six
 import time
 
@@ -87,6 +88,40 @@ class BaseNulsData:
         else:
             return item.serialize()
 
+class NulsSignature(BaseNulsData):
+    ALG_TYPE = 0 # only one for now...
+
+    def __init__(self, data=None):
+        self.pub_key = None
+        self.digest_bytes = None
+        self.sig_ser = None
+        if data is not None:
+            self.parse(data)
+
+    def parse(self):
+        raise NotImplementedError("Not yet implemented.")
+
+    @classmethod
+    def sign_data(cls, pri_key, digest_bytes):
+        privkey = PrivateKey(pri_key, raw=True) # we expect to have a private key as bytes. unhexlify it before passing.
+        item = cls()
+        item.pub_key = privkey.pubkey.serialize()
+        item.digest_bytes = digest_bytes
+        sig_check = privkey.ecdsa_sign(digest_bytes, raw=True)
+        item.sig_ser = privkey.ecdsa_serialize(sig_check)
+        return item
+
+    def serialize(self, with_length=False):
+        output = b''
+        output += write_with_length(self.pub_key)
+        output += bytes([0]) #alg ecc type
+        output += write_with_length(self.sig_ser)
+        if with_length:
+            return write_with_length(output)
+        else:
+            return output
+
+
 class NulsDigestData(BaseNulsData):
     HASH_LENGTH = 34
     DIGEST_ALG_SHA256 = 0
@@ -107,9 +142,9 @@ class NulsDigestData(BaseNulsData):
     def size(self):
         return self.HASH_LENGTH
 
-    def parse(self, buffer):
-        self.alg_type = buffer[0]
-        pos, self.digest_bytes = read_by_length(buffer, cursor=1)
+    def parse(self, buffer, cursor=0):
+        self.alg_type = buffer[cursor]
+        pos, self.digest_bytes = read_by_length(buffer, cursor=cursor+1)
 
     def serialize(self):
         return bytes([self.alg_type, len(self.digest_bytes)]) + self.digest_bytes
