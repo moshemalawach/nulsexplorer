@@ -1,6 +1,9 @@
 from hashlib import sha256
 from binascii import hexlify, unhexlify
-from secp256k1 import PrivateKey
+try:
+    from secp256k1 import PrivateKey
+except ImportError:
+    print("Can't import secp256k1, can't verify and sign tx.")
 import six
 import time
 
