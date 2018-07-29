@@ -6,6 +6,7 @@ except ImportError:
     print("Can't import secp256k1, can't verify and sign tx.")
 import six
 import time
+import struct
 
 PLACE_HOLDER = b"\xFF\xFF\xFF\xFF"
 ADDRESS_LENGTH = 23
