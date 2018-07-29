@@ -259,12 +259,14 @@ class VarInt:
             self.originallyEncodedSize = 3
 
         elif (first == 254):
-            value = SerializeUtils.readUint32LE(buf, offset + 1)
+            #value = SerializeUtils.readUint32LE(buf, offset + 1)
+            self.value = struct.unpack("<I", buf[offset+1:offset+5])
             # 1 marker + 4 data bytes (32 bits)
             self.originallyEncodedSize = 5
 
         else:
-            value = SerializeUtils.readInt64LE(buf, offset + 1)
+            #value = SerializeUtils.readInt64LE(buf, offset + 1)
+            self.value = struct.unpack("<Q", buf[offset+1:offset+9])
             # 1 marker + 8 data bytes (64 bits)
             self.originallyEncodedSize = 9
 
