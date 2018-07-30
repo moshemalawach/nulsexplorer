@@ -7,6 +7,7 @@ except ImportError:
 import six
 import time
 import struct
+import hashlib
 
 PLACE_HOLDER = b"\xFF\xFF\xFF\xFF"
 ADDRESS_LENGTH = 23
@@ -75,6 +76,13 @@ def address_from_hash(addr):
 
 def hash_from_address(hash):
     return b58_decode(hash)[:-1]
+
+def public_key_to_hash(pub_key, chain_id=8964, address_type=1):
+    sha256_digest = hashlib.sha256(pub_key).digest()
+    md160_digest = hashlib.new('ripemd160', sha256_digest).digest()
+    computed_address = bytes(struct.pack("h", chain_id)) + \
+                       bytes([address_type]) + md160_digest
+    return computed_address
 
 class BaseNulsData:
     def _pre_parse(buffer, cursor=None, length=None):
