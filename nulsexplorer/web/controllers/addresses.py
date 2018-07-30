@@ -19,13 +19,21 @@ async def cache_last_block_height():
 
 # WARNING: we are storing this in memory... memcached or similar would be better
 #          if volume starts to be too big.
-@cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
-async def addresses_unspent_txs(last_block_height, check_time=None):
+@cached(ttl=60*30, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
+async def addresses_unspent_txs(last_block_height, check_time=None, address_list=None):
+    t1 = datetime.datetime.now()
     if check_time is None:
         check_time = datetime.datetime.now()
 
-    aggregate = Transaction.collection.aggregate([
-        {'$unwind': '$outputs'}, {'$match': {'outputs.status': {'$lt': 3}}},
+    match_step = {'$match': {'outputs.status': {'$lt': 3}}}
+    matches = [match_step]
+    if address_list is not None:
+        matches.append({
+            '$match': {'outputs.address': {'$in': address_list}}
+        })
+
+    aggregate = Transaction.collection.aggregate(
+        matches + [{'$unwind': '$outputs'}] + matches + [
         {'$group': {'_id': '$outputs.address',
                     'unspent_count': {'$sum': 1},
                     'unspent_value': {'$sum': '$outputs.value'},
@@ -88,11 +96,15 @@ async def addresses_unspent_txs(last_block_height, check_time=None):
         }},
         {'$sort': {'unspent_value': -1}}
     ])
-    return [item async for item in aggregate]
+    items = [item async for item in aggregate]
+    t2 = datetime.datetime.now()
+    print(t2-t1)
+    return items
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
-async def addresses_unspent_info(last_block_height):
-    unspent_info = await addresses_unspent_txs(last_block_height)
+async def addresses_unspent_info(last_block_height, address_list=None):
+    unspent_info = await addresses_unspent_txs(last_block_height,
+                                               address_list=address_list)
     return {info['_id']: info
             for info in unspent_info}
 
@@ -271,7 +283,10 @@ async def view_address(request):
     if "summary" in mode:
         transactions = [await summarize_tx(tx, address) for tx in transactions]
     # reusing data from cache here... maybe we should do a search here too ?
-    unspent_info = (await addresses_unspent_info(await cache_last_block_height())).get(address, {})
+    #unspent_info = (await addresses_unspent_info(await cache_last_block_height())).get(address, {})
+    unspent_info = (await addresses_unspent_info(last_height,
+                                                 address_list=[address])
+                    ).get(address, {})
 
     pagination = Pagination(page, per_page, tx_count)
 
