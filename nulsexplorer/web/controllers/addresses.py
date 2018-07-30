@@ -317,6 +317,9 @@ async def address_available_outputs(request):
     all_txs = Transaction.collection.find(
             {'outputs.status': {'$lt': 3},
              'outputs.address': address})
+    unspent_info = (await addresses_unspent_info(last_height,
+                                                 address_list=[address])
+                    ).get(address, {})
     outputs = []
     async for tx in all_txs:
         tx_hash = tx['hash']
@@ -345,7 +348,8 @@ async def address_available_outputs(request):
 
     context = {'outputs': outputs,
                'last_height': last_height,
-               'totoal_available': sum([o['value'] for o in outputs])}
+               'unspent_info': unspent_info,
+               'total_available': sum([o['value'] for o in outputs])}
     return web.json_response(context, dumps=lambda v: json.dumps(v,
                                                      default=json_util.default))
 
