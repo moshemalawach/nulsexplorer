@@ -72,5 +72,4 @@ class Block(BaseClass):
     INDEXES = [Index("hash", unique=True),
                Index("height", pymongo.ASCENDING, unique=True),
                Index("height", pymongo.DESCENDING),
-               Index("packingAddress"),
-               Index("outputs.status")]
+               Index("packingAddress")]
