@@ -262,6 +262,9 @@ async def view_address(request):
     if "summary" in mode:
         per_page = PER_PAGE_SUMMARY
 
+    if request.rel_url.path.endswith('/all.json'):
+        per_page = 10000
+
     page = int(request.match_info.get('page', '1'))
     where_query = {'$or':
                     [{'outputs.address': address},
@@ -363,3 +366,4 @@ app.router.add_get('/addresses/{address}/page/{page}.json', view_address)
 app.router.add_get('/addresses/{address}/page/{page}', view_address)
 app.router.add_get('/addresses/{address}/{mode}/page/{page}.json', view_address)
 app.router.add_get('/addresses/{address}/{mode}/page/{page}', view_address)
+app.router.add_get('/addresses/{address}/{mode}/all.json', view_address)

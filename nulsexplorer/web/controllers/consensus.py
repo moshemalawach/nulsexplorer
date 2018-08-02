@@ -161,7 +161,7 @@ async def view_node(request):
                              {'hash': txhash}
                          ]},
                          {'$and': [
-                             {'type': 3}, # register
+                             {'type': 3}, # alias
                              {'inputs.address': transaction['info']['agentAddress']}
                          ]}]}
     tx_count = await Transaction.count(where_query)
