@@ -13,7 +13,7 @@ from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output
 
 from aiocache import cached, SimpleMemoryCache
 
-@cached(ttl=60*10, cache=SimpleMemoryCache)
+@cached(ttl=60*120, cache=SimpleMemoryCache)
 async def cache_last_block_height():
     return await get_last_block_height()
 
