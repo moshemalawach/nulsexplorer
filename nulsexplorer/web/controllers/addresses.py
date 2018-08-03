@@ -19,7 +19,7 @@ async def cache_last_block_height():
 
 # WARNING: we are storing this in memory... memcached or similar would be better
 #          if volume starts to be too big.
-@cached(ttl=60*30, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
+@cached(ttl=60*120, cache=SimpleMemoryCache) # 60*120 seconds or 2 hours minutes
 async def addresses_unspent_txs(last_block_height, check_time=None, address_list=None):
     t1 = datetime.datetime.now()
     if check_time is None:
