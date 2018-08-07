@@ -7,10 +7,28 @@ PER_PAGE = 20
 PER_PAGE_SUMMARY = 50
 
 class Pagination(object):
-    def __init__(self, page, per_page, total_count):
+
+    @staticmethod
+    def get_pagination_params(request):
+        pagination_page = int(request.match_info.get('page', '1'))
+        pagination_param = int(request.query.get('pagination', PER_PAGE))
+        with_pagination = pagination_param is not 0
+
+        if not with_pagination:
+            pagination_per_page = None
+            pagination_skip = None
+        else:
+            pagination_per_page = pagination_param
+            pagination_skip = (pagination_page-1)*pagination_param
+
+        return (pagination_page, pagination_per_page, pagination_skip)
+
+    def __init__(self, page, per_page, total_count, url_base = None, query_string = None):
         self.page = page
         self.per_page = per_page
         self.total_count = total_count
+        self.url_base = url_base
+        self.query_string = query_string
 
     @property
     def pages(self):

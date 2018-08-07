@@ -114,30 +114,42 @@
 </tr>
 {%- endmacro %}
 
-{% macro paginate(pagination, base_url, ulclass="", navclass="") -%}
-<nav aria-label="Navigation" class="{{navclass}}">
-  <ul class="pagination {{ulclass}}">
-    {% if pagination.has_prev %}
-      <li class="page-item">
-        <a class="page-link" href="{{base_url}}{{ pagination.page - 1 }}">&laquo; <span class="d-none d-lg-inline">Previous</span></a>
-      </li>
-    {% endif %}
-    {%- for page in pagination.iter_pages() %}
-      {% if page %}
-        <li class="page-item{% if page == pagination.page %} active{% endif %}">
-          <a class="page-link" href="{{base_url}}{{ page }}">{{ page }}</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <a class="page-link" href="#" tabindex="-1">…</a>
+{% macro paginate(pagination, base_url="", ulclass="", navclass="") -%}
+{% if pagination %}
+  {% if not base_url %}
+    {% set base_url = pagination.base_url %}
+  {% endif %}
+
+  {% if pagination.query_string %}
+    {% set query_string = "?" + pagination.query_string %}
+  {% else %}
+    {% set query_string = "" %}
+  {% endif %}
+
+  <nav aria-label="Navigation" class="{{navclass}}">
+    <ul class="pagination {{ulclass}}">
+      {% if pagination.has_prev %}
+        <li class="page-item">
+          <a class="page-link" href="{{base_url}}{{ pagination.page - 1 }}{{query_string}}">&laquo; <span class="d-none d-lg-inline">Previous</span></a>
         </li>
       {% endif %}
-    {%- endfor %}
-    {% if pagination.has_next %}
-      <li class="page-item">
-        <a class="page-link" href="{{base_url}}{{ pagination.page + 1 }}"><span class="d-none d-lg-inline">Next</span> &raquo;</a>
-      </li>
-    {% endif %}
-  </ul>
-</nav>
+      {%- for page in pagination.iter_pages() %}
+        {% if page %}
+          <li class="page-item{% if page == pagination.page %} active{% endif %}">
+            <a class="page-link" href="{{base_url}}{{ page }}{{query_string}}">{{ page }}</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled">
+            <a class="page-link" href="#" tabindex="-1">…</a>
+          </li>
+        {% endif %}
+      {%- endfor %}
+      {% if pagination.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="{{base_url}}{{ pagination.page + 1 }}{{query_string}}"><span class="d-none d-lg-inline">Next</span> &raquo;</a>
+        </li>
+      {% endif %}
+    </ul>
+  </nav>
+{% endif %}
 {%- endmacro %}

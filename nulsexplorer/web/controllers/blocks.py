@@ -5,7 +5,9 @@ from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from aiohttp import web
 from .utils import Pagination, PER_PAGE, cond_output
+import logging
 
+LOGGER = logging.getLogger(__name__)
 
 
 #@aiohttp_jinja2.template('block.html')
@@ -45,21 +47,36 @@ async def block_list(request):
     """ Blocks view
     """
 
-    total_blocks = await Block.count()
-    page = int(request.match_info.get('page', '1'))
+    findFilters = {}
+
+    query_string = request.query_string
+    producer = request.query.get('producer', None)
+    
+    if producer is not None:
+        findFilters['packingAddress'] = producer
+
+    pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
+
     blocks = [block._data async for block
-              in Block.find({}, limit=PER_PAGE, skip=(page-1)*PER_PAGE,
+              in Block.find(findFilters, limit=pagination_per_page, skip=pagination_skip,
                             sort=[('height', -1)])]
 
-    pagination = Pagination(page, PER_PAGE, total_blocks)
-
     context = {'blocks': blocks,
-                'pagination': pagination,
-                'last_height': await get_last_block_height(),
-                'pagination_page': page,
-                'pagination_total':total_blocks,
-                'pagination_per_page': PER_PAGE,
-                'pagination_item': 'blocks'}
+                'last_height': await get_last_block_height()}
+
+    if pagination_per_page is not None:
+        total_blocks = await Block.count(findFilters)
+
+        pagination = Pagination(pagination_page, pagination_per_page, total_blocks, 
+                                url_base='/blocks/page/', query_string=query_string)
+                                
+        context.update({
+            'pagination': pagination,
+            'pagination_page': pagination_page,
+            'pagination_total': total_blocks,
+            'pagination_per_page': pagination_per_page,
+            'pagination_item': 'blocks'
+        })
 
     return cond_output(request, context, 'blocks.html')
 
