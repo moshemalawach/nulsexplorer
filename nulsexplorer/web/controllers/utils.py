@@ -56,6 +56,27 @@ class Pagination(object):
                 last = num
 
 
+def prepare_date_filters(request, filter_key):
+    date_filters = None
+
+    start_date = int(request.query.get('startDate', 0))
+    end_date = int(request.query.get('endDate', 0))
+
+    if start_date > 0:
+        date_filters = {}
+        date_filters[filter_key] = {'$gte': start_date}
+
+    if end_date > 0:
+        new_filter = {}
+        new_filter[filter_key] = {'$lte': end_date}
+        if date_filters is not None:
+            date_filters = {'$and': [date_filters, new_filter]}
+        else:
+            date_filters = new_filter
+
+    return date_filters
+
+
 def cond_output(request, context, template):
     if request.rel_url.path.endswith('.json'):
         if 'pagination' in context:

@@ -4,7 +4,7 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from aiohttp import web
-from .utils import Pagination, PER_PAGE, cond_output
+from .utils import Pagination, PER_PAGE, cond_output, prepare_date_filters
 import logging
 
 LOGGER = logging.getLogger(__name__)
@@ -51,9 +51,13 @@ async def block_list(request):
 
     query_string = request.query_string
     producer = request.query.get('producer', None)
-    
+    date_filters = prepare_date_filters(request, 'time')
+
     if producer is not None:
         findFilters['packingAddress'] = producer
+
+    if date_filters is not None:
+        findFilters.update(date_filters)
 
     pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
 
