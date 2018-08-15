@@ -300,7 +300,7 @@ class Transaction(BaseNulsData):
         item.remark = value.get('remark', b'')
         item.scriptSig = value.get('scriptSig')
         item.size = value.get('size')
-        item.info = value.get('info') # this should be fixed.
+        item.module_data = value.get('info') # this should be fixed.
 
         for input in value.get('inputs'):
             item.coin_data.inputs.append(Coin.from_dict(input))
