@@ -2,7 +2,7 @@ import aiohttp_jinja2
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (get_last_block_height, find_block)
-from .utils import Pagination, PER_PAGE, cond_output, prepare_date_filters
+from .utils import Pagination, PER_PAGE, cond_output, prepare_date_filters, prepare_block_height_filters
 from aiohttp import web
 
 #@aiohttp_jinja2.template('transaction.html')
@@ -35,6 +35,7 @@ async def view_transaction_list(request):
     address = request.query.get('address', None)
     tx_type = request.query.get('type', None)
     date_filters = prepare_date_filters(request, 'time')
+    block_height_filters = prepare_block_height_filters(request, 'blockHeight')
 
     if address is not None:
         filters.append({
@@ -57,6 +58,9 @@ async def view_transaction_list(request):
 
     if date_filters is not None:
         filters.append(date_filters)
+
+    if block_height_filters is not None:
+        filters.append(block_height_filters)
 
     if len(filters) > 0:
         find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
