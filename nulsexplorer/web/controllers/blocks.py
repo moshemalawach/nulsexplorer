@@ -4,7 +4,7 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from aiohttp import web
-from .utils import Pagination, PER_PAGE, cond_output, prepare_date_filters
+from .utils import Pagination, PER_PAGE, cond_output, prepare_date_filters, prepare_block_height_filters
 import logging
 
 LOGGER = logging.getLogger(__name__)
@@ -47,29 +47,33 @@ async def block_list(request):
     """ Blocks view
     """
 
-    findFilters = {}
+    find_filters = {}
 
     query_string = request.query_string
     producer = request.query.get('producer', None)
     date_filters = prepare_date_filters(request, 'time')
+    block_height_filters = prepare_block_height_filters(request, 'height')
 
     if producer is not None:
-        findFilters['packingAddress'] = producer
+        find_filters['packingAddress'] = producer
 
     if date_filters is not None:
-        findFilters.update(date_filters)
+        find_filters.update(date_filters)
+
+    if block_height_filters is not None:
+        find_filters.update(block_height_filters)
 
     pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
 
     blocks = [block._data async for block
-              in Block.find(findFilters, limit=pagination_per_page, skip=pagination_skip,
+              in Block.find(find_filters, limit=pagination_per_page, skip=pagination_skip,
                             sort=[('height', -1)])]
 
     context = {'blocks': blocks,
                 'last_height': await get_last_block_height()}
 
     if pagination_per_page is not None:
-        total_blocks = await Block.count(findFilters)
+        total_blocks = await Block.count(find_filters)
 
         pagination = Pagination(pagination_page, pagination_per_page, total_blocks, 
                                 url_base='/blocks/page/', query_string=query_string)

@@ -76,6 +76,25 @@ def prepare_date_filters(request, filter_key):
 
     return date_filters
 
+def prepare_block_height_filters(request, filter_key):
+    height_filters = None
+
+    start_height = int(request.query.get('startHeight', 0))
+    end_height = int(request.query.get('endHeight', 0))
+
+    if start_height > 0:
+        height_filters = {}
+        height_filters[filter_key] = {'$gte': start_height}
+
+    if end_height > 0:
+        new_filter = {}
+        new_filter[filter_key] = {'$lte': end_height}
+        if height_filters is not None:
+            height_filters = {'$and': [height_filters, new_filter]}
+        else:
+            height_filters = new_filter
+
+    return height_filters
 
 def cond_output(request, context, template):
     if request.rel_url.path.endswith('.json'):
