@@ -7,7 +7,7 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from nulsexplorer.web.controllers.addresses import summarize_tx
-from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output
+from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output, prepare_block_height_filters
 
 import logging
 
@@ -125,11 +125,15 @@ async def view_consensus_list(request):
 
     heights = request.query.get('heights', None)
     agent_hash = request.query.get('agent', None)
+    block_height_filters = prepare_block_height_filters(request, 'height')
 
     pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
 
     if heights is not None:
         filters.append({'height': {'$in': [int(height) for height in heights.split(",")]}})
+
+    elif block_height_filters is not None:
+        filters.append(block_height_filters)
 
     if agent_hash is not None:
         filters.append({'agents.agentHash': agent_hash})
