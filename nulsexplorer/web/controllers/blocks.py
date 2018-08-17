@@ -48,6 +48,7 @@ async def block_list(request):
     """
 
     find_filters = {}
+    filters = []
 
     query_string = request.query_string
     producer = request.query.get('producer', None)
@@ -55,13 +56,16 @@ async def block_list(request):
     block_height_filters = prepare_block_height_filters(request, 'height')
 
     if producer is not None:
-        find_filters['packingAddress'] = producer
+        filters.append({'packingAddress': producer})
 
     if date_filters is not None:
-        find_filters.update(date_filters)
+        filters.append(date_filters)
 
     if block_height_filters is not None:
-        find_filters.update(block_height_filters)
+        filters.append(block_height_filters)
+
+    if len(filters) > 0:
+        find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
 
     pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
 
