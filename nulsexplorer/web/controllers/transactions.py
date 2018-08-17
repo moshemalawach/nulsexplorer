@@ -34,6 +34,7 @@ async def view_transaction_list(request):
     query_string = request.query_string
     address = request.query.get('address', None)
     tx_type = request.query.get('type', None)
+    mask_by_address = request.query.get('maskByAddress', None)
     date_filters = prepare_date_filters(request, 'time')
     block_height_filters = prepare_block_height_filters(request, 'blockHeight')
 
@@ -69,6 +70,11 @@ async def view_transaction_list(request):
 
     transactions = [tx._data async for tx
                     in Transaction.find(find_filters, limit=pagination_per_page, skip=pagination_skip, sort=[('blockHeight', -1)])]
+
+    if mask_by_address is not None:
+        for tx in transactions:
+            tx['inputs'] = list(filter(lambda i: i['address'] == mask_by_address, tx['inputs']))
+            tx['outputs'] = list(filter(lambda o: o['address'] == mask_by_address, tx['outputs']))
 
     context = {
         'transactions': transactions,
