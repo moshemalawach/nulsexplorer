@@ -105,4 +105,7 @@ def cond_output(request, context, template):
         response = aiohttp_jinja2.render_template(template,
                                                   request,
                                                   context)
+    
+    response.enable_compression()
+    
     return response
