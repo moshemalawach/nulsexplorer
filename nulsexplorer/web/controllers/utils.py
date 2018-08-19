@@ -7,10 +7,28 @@ PER_PAGE = 20
 PER_PAGE_SUMMARY = 50
 
 class Pagination(object):
-    def __init__(self, page, per_page, total_count):
+
+    @staticmethod
+    def get_pagination_params(request):
+        pagination_page = int(request.match_info.get('page', '1'))
+        pagination_param = int(request.query.get('pagination', PER_PAGE))
+        with_pagination = pagination_param is not 0
+
+        if not with_pagination:
+            pagination_per_page = None
+            pagination_skip = None
+        else:
+            pagination_per_page = pagination_param
+            pagination_skip = (pagination_page-1)*pagination_param
+
+        return (pagination_page, pagination_per_page, pagination_skip)
+
+    def __init__(self, page, per_page, total_count, url_base = None, query_string = None):
         self.page = page
         self.per_page = per_page
         self.total_count = total_count
+        self.url_base = url_base
+        self.query_string = query_string
 
     @property
     def pages(self):
@@ -37,6 +55,46 @@ class Pagination(object):
                 yield num
                 last = num
 
+
+def prepare_date_filters(request, filter_key):
+    date_filters = None
+
+    start_date = int(request.query.get('startDate', 0))
+    end_date = int(request.query.get('endDate', 0))
+
+    if start_date > 0:
+        date_filters = {}
+        date_filters[filter_key] = {'$gte': start_date}
+
+    if end_date > 0:
+        new_filter = {}
+        new_filter[filter_key] = {'$lte': end_date}
+        if date_filters is not None:
+            date_filters = {'$and': [date_filters, new_filter]}
+        else:
+            date_filters = new_filter
+
+    return date_filters
+
+def prepare_block_height_filters(request, filter_key):
+    height_filters = None
+
+    start_height = int(request.query.get('startHeight', 0))
+    end_height = int(request.query.get('endHeight', 0))
+
+    if start_height > 0:
+        height_filters = {}
+        height_filters[filter_key] = {'$gte': start_height}
+
+    if end_height > 0:
+        new_filter = {}
+        new_filter[filter_key] = {'$lte': end_height}
+        if height_filters is not None:
+            height_filters = {'$and': [height_filters, new_filter]}
+        else:
+            height_filters = new_filter
+
+    return height_filters
 
 def cond_output(request, context, template):
     if request.rel_url.path.endswith('.json'):
