@@ -91,11 +91,8 @@ async def view_consensus(request):
     active_count = len([a for a in consensus['agents'] if a['status'] == 1])
     totals_all, totals_hour, totals_day = await get_packer_stats(height)
 
-<<<<<<< HEAD
     stats = await get_consensus_stats(await cache_last_block_height())
-=======
-    stats = await get_consensus_stats(height)
->>>>>>> bc3bb84a4603faa361429b8cb029149866dfedf1
+    
     stats_heights = [s['_id'] for s in stats]
     stats_stacked_values = [int((s['totalDeposit']+s['deposit'])/100000000000) for s in stats] # in KNuls
     stats_active_nodes = [s['activeNodes'] for s in stats]
