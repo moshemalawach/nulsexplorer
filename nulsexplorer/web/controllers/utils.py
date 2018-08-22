@@ -3,8 +3,17 @@ from aiohttp import web
 from bson import json_util
 from math import ceil
 import json
+from aiocache import cached, SimpleMemoryCache
+
+from nulsexplorer.model.blocks import (get_last_block_height)
+
 PER_PAGE = 20
 PER_PAGE_SUMMARY = 50
+
+
+@cached(ttl=60*120, cache=SimpleMemoryCache)
+async def cache_last_block_height():
+    return await get_last_block_height()
 
 class Pagination(object):
     def __init__(self, page, per_page, total_count):

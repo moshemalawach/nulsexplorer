@@ -4,18 +4,15 @@ from collections import defaultdict
 from nulsexplorer import TRANSACTION_TYPES
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
-from nulsexplorer.model.blocks import (get_last_block_height)
 from bson import json_util
 import datetime
 import time
 import json
-from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output
+from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
+                    cond_output, cache_last_block_height)
 
 from aiocache import cached, SimpleMemoryCache
 
-@cached(ttl=60*120, cache=SimpleMemoryCache)
-async def cache_last_block_height():
-    return await get_last_block_height()
 
 # WARNING: we are storing this in memory... memcached or similar would be better
 #          if volume starts to be too big.
