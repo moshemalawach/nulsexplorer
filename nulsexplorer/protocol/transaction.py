@@ -221,6 +221,10 @@ class Transaction(BaseNulsData):
             md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
             cursor += HASH_LENGTH
 
+        elif self.type == 10: # business data
+            pos, md['logicData'] = read_by_length(buffer, cursor)
+            cursor += pos
+
         return cursor
 
     def get_hash(self):
@@ -300,7 +304,7 @@ class Transaction(BaseNulsData):
         item.remark = value.get('remark', b'')
         item.scriptSig = value.get('scriptSig')
         item.size = value.get('size')
-        item.info = value.get('info') # this should be fixed.
+        item.module_data = value.get('info') # this should be fixed.
 
         for input in value.get('inputs'):
             item.coin_data.inputs.append(Coin.from_dict(input))
@@ -353,6 +357,9 @@ class Transaction(BaseNulsData):
 
         elif self.type == 9: # stop agent
             output += unhexlify(md['createTxHash'])
+
+        elif self.type == 10: # stop agent
+            output += write_with_length(md['logicData'])
 
         return output
 

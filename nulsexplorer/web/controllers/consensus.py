@@ -7,8 +7,15 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from nulsexplorer.web.controllers.addresses import summarize_tx
+<<<<<<< HEAD
 from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
                     cond_output, cache_last_block_height)
+=======
+from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output, prepare_block_height_filters
+
+import logging
+
+>>>>>>> bc3bb84a4603faa361429b8cb029149866dfedf1
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def get_packer_stats(last_height):
@@ -74,19 +81,32 @@ async def view_consensus(request):
     """ Address view
     """
     last_height = await get_last_block_height()
-    consensus = await Consensus.collection.find_one(sort=[('height', -1)])
+    height = int(request.query.get('height', last_height))
+
+    if height < last_height:
+        consensus = await Consensus.collection.find_one({'height': height})
+    else:
+        consensus = await Consensus.collection.find_one(sort=[('height', -1)])
+
+    if consensus is None:
+        raise web.HTTPNotFound(text="Consensus height not found")
 
     #db.blocks.aggregate({$match: {'height': {'$gt': 40000}}},     )
     node_count = len(consensus['agents'])
     total_deposit = sum([a['totalDeposit'] + a['deposit'] for a in consensus['agents']])
     active_count = len([a for a in consensus['agents'] if a['status'] == 1])
-    totals_all, totals_hour, totals_day = await get_packer_stats(last_height)
+    totals_all, totals_hour, totals_day = await get_packer_stats(height)
 
+<<<<<<< HEAD
     stats = await get_consensus_stats(await cache_last_block_height())
+=======
+    stats = await get_consensus_stats(height)
+>>>>>>> bc3bb84a4603faa361429b8cb029149866dfedf1
     stats_heights = [s['_id'] for s in stats]
     stats_stacked_values = [int((s['totalDeposit']+s['deposit'])/100000000000) for s in stats] # in KNuls
     stats_active_nodes = [s['activeNodes'] for s in stats]
     context = {'consensus': consensus,
+            'height': height,
             'last_height': last_height,
             'total_all': totals_all,
             'total_hour': totals_hour,
@@ -103,6 +123,79 @@ async def view_consensus(request):
 
 app.router.add_get('/consensus.json', view_consensus)
 app.router.add_get('/consensus', view_consensus)
+
+# @aiohttp_jinja2.template('consensus_list.html')
+async def view_consensus_list(request):
+    """ Consensus list with filters
+    """
+
+    find_filters = {}
+    filters = []
+
+    heights = request.query.get('heights', None)
+    agent_hash = request.query.get('agent', None)
+    block_height_filters = prepare_block_height_filters(request, 'height')
+
+    pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
+
+    if heights is not None:
+        filters.append({'height': {'$in': [int(height) for height in heights.split(",")]}})
+
+    elif block_height_filters is not None:
+        filters.append(block_height_filters)
+
+    if agent_hash is not None:
+        filters.append({'agents.agentHash': agent_hash})
+
+    if len(filters) > 0:
+        find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
+    
+    consensus_model_list = [cons._data async for cons in Consensus.find(find_filters, 
+                            limit=pagination_per_page, skip=pagination_skip, sort=[('height', -1)])]
+    
+    consensus_list = []
+
+    for consensus in consensus_model_list:
+        node_count = len(consensus['agents'])
+        total_deposit = sum([a['totalDeposit'] + a['deposit'] for a in consensus['agents']])
+        active_count = len([a for a in consensus['agents'] if a['status'] == 1])
+        # totals_all, totals_hour, totals_day = await get_packer_stats(height)
+
+        if agent_hash is not None:
+            consensus['agents'] = list(filter(lambda agent: agent['agentHash'] == agent_hash, consensus['agents']))
+
+        consensus_list.append({
+            'consensus': consensus,
+            'height': consensus['height'],
+            # 'total_all': totals_all,
+            # 'total_hour': totals_hour,
+            # 'total_day': totals_day,
+            'node_count': node_count,
+            'active_count': active_count,
+            'total_deposit': total_deposit,
+        })
+
+    context = {
+        'consensus_list': consensus_list,
+    }
+
+    if pagination_per_page is not None:
+        total_heights = await Consensus.count(find_filters)
+
+        pagination = Pagination(pagination_page, pagination_per_page, total_heights)
+                                
+        context.update({
+            'pagination': pagination,
+            'pagination_page': pagination_page,
+            'pagination_total': total_heights,
+            'pagination_per_page': pagination_per_page,
+            'pagination_item': 'consensus_list'
+        })
+
+    return cond_output(request, context, 'consensus_list.html')
+
+app.router.add_get('/consensus/list.json', view_consensus_list)
+app.router.add_get('/consensus/list/page/{page}.json', view_consensus_list)
 
 #@aiohttp_jinja2.template('node.html')
 async def view_node(request):
