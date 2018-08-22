@@ -22,6 +22,16 @@ async def api_request(session, uri):
             print(repr(jres))
             return None # we got an error, we should log it correctly and catch it.
 
+async def api_post(session, uri, data):
+    base_uri = app['config'].nuls.base_uri.value
+    async with session.post(base_uri + uri, json=data) as resp:
+        jres = await resp.json()
+        if jres.get('success', False):
+            return jres['data']
+        else:
+            print(repr(jres))
+            return None # we got an error, we should log it correctly and catch it.
+
 async def request_last_height(session):
     last_height = -1
     resp = await api_request(session, 'block/newest/height')
