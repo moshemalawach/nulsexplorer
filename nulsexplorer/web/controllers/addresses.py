@@ -9,10 +9,13 @@ import datetime
 import time
 import json
 from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
-                    cond_output, cache_last_block_height)
+                    cond_output)
 
 from aiocache import cached, SimpleMemoryCache
 
+@cached(ttl=60*120, cache=SimpleMemoryCache)
+async def cache_last_block_height():
+    return await get_last_block_height()
 
 # WARNING: we are storing this in memory... memcached or similar would be better
 #          if volume starts to be too big.

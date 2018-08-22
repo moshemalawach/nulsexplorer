@@ -11,9 +11,6 @@ PER_PAGE = 20
 PER_PAGE_SUMMARY = 50
 
 
-@cached(ttl=60*120, cache=SimpleMemoryCache)
-async def cache_last_block_height():
-    return await get_last_block_height()
 
 class Pagination(object):
 
@@ -114,7 +111,7 @@ def cond_output(request, context, template):
         response = aiohttp_jinja2.render_template(template,
                                                   request,
                                                   context)
-    
+
     response.enable_compression()
-    
+
     return response

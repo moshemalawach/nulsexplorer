@@ -8,8 +8,12 @@ from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from nulsexplorer.web.controllers.addresses import summarize_tx
 from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
-                    cond_output, cache_last_block_height,
-                    prepare_block_height_filters)
+                    cond_output, prepare_block_height_filters)
+
+
+@cached(ttl=60*10, cache=SimpleMemoryCache)
+async def cache_last_block_height():
+    return await get_last_block_height()
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def get_packer_stats(last_height):
@@ -92,7 +96,7 @@ async def view_consensus(request):
     totals_all, totals_hour, totals_day = await get_packer_stats(height)
 
     stats = await get_consensus_stats(await cache_last_block_height())
-    
+
     stats_heights = [s['_id'] for s in stats]
     stats_stacked_values = [int((s['totalDeposit']+s['deposit'])/100000000000) for s in stats] # in KNuls
     stats_active_nodes = [s['activeNodes'] for s in stats]
