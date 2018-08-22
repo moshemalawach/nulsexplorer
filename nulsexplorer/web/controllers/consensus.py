@@ -7,15 +7,9 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from nulsexplorer.web.controllers.addresses import summarize_tx
-<<<<<<< HEAD
 from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
-                    cond_output, cache_last_block_height)
-=======
-from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output, prepare_block_height_filters
-
-import logging
-
->>>>>>> bc3bb84a4603faa361429b8cb029149866dfedf1
+                    cond_output, cache_last_block_height,
+                    prepare_block_height_filters)
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def get_packer_stats(last_height):
@@ -149,10 +143,10 @@ async def view_consensus_list(request):
 
     if len(filters) > 0:
         find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
-    
-    consensus_model_list = [cons._data async for cons in Consensus.find(find_filters, 
+
+    consensus_model_list = [cons._data async for cons in Consensus.find(find_filters,
                             limit=pagination_per_page, skip=pagination_skip, sort=[('height', -1)])]
-    
+
     consensus_list = []
 
     for consensus in consensus_model_list:
@@ -183,7 +177,7 @@ async def view_consensus_list(request):
         total_heights = await Consensus.count(find_filters)
 
         pagination = Pagination(pagination_page, pagination_per_page, total_heights)
-                                
+
         context.update({
             'pagination': pagination,
             'pagination_page': pagination_page,
