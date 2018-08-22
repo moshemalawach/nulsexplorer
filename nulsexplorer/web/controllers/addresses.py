@@ -4,6 +4,7 @@ from collections import defaultdict
 from nulsexplorer import TRANSACTION_TYPES
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
+from nulsexplorer.model.blocks import (get_last_block_height)
 from bson import json_util
 import datetime
 import time
