@@ -96,7 +96,7 @@ async def addresses_unspent_txs(last_block_height, check_time=None, address_list
             'available_value': {'$subtract': ['$unspent_value', '$locked_value']}
         }},
         {'$sort': {'unspent_value': -1}}
-    ])
+    ], allowDiskUse=(address_list is None))
     items = [item async for item in aggregate]
     t2 = datetime.datetime.now()
     print(t2-t1)
