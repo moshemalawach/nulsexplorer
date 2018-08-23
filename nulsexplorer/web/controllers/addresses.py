@@ -124,9 +124,11 @@ async def summarize_tx(tx, pov, node_mode=False):
     input_values = defaultdict(int)
     output_values = defaultdict(int)
     for i in inputs:
-        input_values[i['address']] += i['value']
+        if 'address' in i:
+            input_values[i['address']] += i['value']
     for o in outputs:
-        output_values[o['address']] += o['value']
+        if 'address' in o:
+            output_values[o['address']] += o['value']
 
     if len(input_values.keys()) > 1:
         tx['is_complex'] = True
