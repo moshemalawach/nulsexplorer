@@ -3,8 +3,14 @@ from aiohttp import web
 from bson import json_util
 from math import ceil
 import json
+from aiocache import cached, SimpleMemoryCache
+
+from nulsexplorer.model.blocks import (get_last_block_height)
+
 PER_PAGE = 20
 PER_PAGE_SUMMARY = 50
+
+
 
 class Pagination(object):
 
@@ -105,7 +111,7 @@ def cond_output(request, context, template):
         response = aiohttp_jinja2.render_template(template,
                                                   request,
                                                   context)
-    
+
     response.enable_compression()
-    
+
     return response

@@ -108,6 +108,11 @@
          <span class="badge badge-secondary text-white">🏦</span>
        </a>
     {% endif %}
+    {% if (transaction.remark) %}
+    <span title="{{transaction.remark}}">
+      <i class="fe fe-info"></i>
+    </span>
+    {% endif %}
   </td>
   <td>{{transaction.value != None and "%0.3f"%(transaction.value/100000000) or ''}}</td>
   <td>{{transaction.fee/100000000}}</td>

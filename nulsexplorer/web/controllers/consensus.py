@@ -7,10 +7,13 @@ from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (Block, find_blocks, find_block,
                                        get_last_block_height)
 from nulsexplorer.web.controllers.addresses import summarize_tx
-from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output, prepare_block_height_filters
+from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
+                    cond_output, prepare_block_height_filters)
 
-import logging
 
+@cached(ttl=60*10, cache=SimpleMemoryCache)
+async def cache_last_block_height():
+    return await get_last_block_height()
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def get_packer_stats(last_height):
@@ -92,7 +95,8 @@ async def view_consensus(request):
     active_count = len([a for a in consensus['agents'] if a['status'] == 1])
     totals_all, totals_hour, totals_day = await get_packer_stats(height)
 
-    stats = await get_consensus_stats(height)
+    stats = await get_consensus_stats(await cache_last_block_height())
+
     stats_heights = [s['_id'] for s in stats]
     stats_stacked_values = [int((s['totalDeposit']+s['deposit'])/100000000000) for s in stats] # in KNuls
     stats_active_nodes = [s['activeNodes'] for s in stats]
@@ -140,10 +144,10 @@ async def view_consensus_list(request):
 
     if len(filters) > 0:
         find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
-    
-    consensus_model_list = [cons._data async for cons in Consensus.find(find_filters, 
+
+    consensus_model_list = [cons._data async for cons in Consensus.find(find_filters,
                             limit=pagination_per_page, skip=pagination_skip, sort=[('height', -1)])]
-    
+
     consensus_list = []
 
     for consensus in consensus_model_list:
@@ -174,7 +178,7 @@ async def view_consensus_list(request):
         total_heights = await Consensus.count(find_filters)
 
         pagination = Pagination(pagination_page, pagination_per_page, total_heights)
-                                
+
         context.update({
             'pagination': pagination,
             'pagination_page': pagination_page,
@@ -204,7 +208,7 @@ async def view_node(request):
     if txhash in [a['agentHash'] for a in consensus['agents']]:
         agent = [a for a in consensus['agents'] if a['agentHash'] == txhash][0]
 
-    stats = await get_consensus_stats(last_height, hash=txhash)
+    stats = await get_consensus_stats(await cache_last_block_height(), hash=txhash)
     stats_heights = [s['_id'] for s in stats]
     stats_stacked_values = [int((s['totalDeposit']+s['deposit'])/100000000000) for s in stats] # in KNuls
 

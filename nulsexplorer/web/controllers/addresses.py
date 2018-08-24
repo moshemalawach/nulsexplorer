@@ -9,7 +9,8 @@ from bson import json_util
 import datetime
 import time
 import json
-from .utils import Pagination, PER_PAGE, PER_PAGE_SUMMARY, cond_output
+from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
+                    cond_output)
 
 from aiocache import cached, SimpleMemoryCache
 
@@ -99,7 +100,7 @@ async def addresses_unspent_txs(last_block_height, check_time=None, address_list
             'available_value': {'$subtract': ['$unspent_value', '$locked_value']}
         }},
         {'$sort': {'unspent_value': -1}}
-    ])
+    ], allowDiskUse=(address_list is None))
     items = [item async for item in aggregate]
     t2 = datetime.datetime.now()
     print(t2-t1)
@@ -127,9 +128,11 @@ async def summarize_tx(tx, pov, node_mode=False):
     input_values = defaultdict(int)
     output_values = defaultdict(int)
     for i in inputs:
-        input_values[i['address']] += i['value']
+        if 'address' in i:
+            input_values[i['address']] += i['value']
     for o in outputs:
-        output_values[o['address']] += o['value']
+        if 'address' in o:
+            output_values[o['address']] += o['value']
 
     if len(input_values.keys()) > 1:
         tx['is_complex'] = True
