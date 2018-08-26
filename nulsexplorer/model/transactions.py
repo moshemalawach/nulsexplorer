@@ -22,10 +22,13 @@ class Transaction(BaseClass):
                Index("outputs.address"),
                Index("inputs.address"),
                Index("outputs.status"),
+               Index("outputs.lockTime"),
                Index("info.createTxHash"),
                Index("info.agentHash"),
                Index([("time", pymongo.DESCENDING),
-                      ("type", pymongo.ASCENDING)]),]
+                      ("type", pymongo.ASCENDING)]),
+              Index([("outputs.status", pymongo.ASCENDING),
+                     ("outputs.lockTime", pymongo.ASCENDING)]),]
 
     @classmethod
     async def update_locks(cls, block_height):
