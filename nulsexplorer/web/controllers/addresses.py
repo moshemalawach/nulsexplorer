@@ -29,9 +29,13 @@ async def addresses_unspent_txs(last_block_height, check_time=None, address_list
     match_step = {'$match': {'outputs.status': {'$lt': 3}}}
     matches = [match_step]
     if address_list is not None:
-        matches.append({
-            '$match': {'outputs.address': {'$in': address_list}}
-        })
+        if len(address_list) > 1:
+            match_step['$match']['outputs.address'] = {'$in': address_list}
+        else:
+            match_step['$match']['outputs.address'] = address_list[0]
+    #     matches.append({
+    #         '$match': {'outputs.address': {'$in': address_list}}
+    #     })
 
     aggregate = Transaction.collection.aggregate(
         matches + [{'$unwind': '$outputs'}] + matches + [
