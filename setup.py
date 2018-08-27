@@ -26,6 +26,7 @@ setup(name='nulsexplorer',
           "aiohttp-jinja2",
           "aiohttp_cors",
           "aiocache",
+          "aiocron",
           "pyyaml",
           "configmanager"#,
           #"secp256k1"

@@ -21,8 +21,7 @@ async def cache_last_block_height():
 # WARNING: we are storing this in memory... memcached or similar would be better
 #          if volume starts to be too big.
 @cached(ttl=60*120, cache=SimpleMemoryCache, timeout=120) # 60*120 seconds or 2 hours minutes, 120 seconds timeout
-async def addresses_unspent_txs(last_block_height, check_time=None, address_list=None):
-    t1 = datetime.datetime.now()
+async def addresses_unspent_txs(last_block_height, check_time=None, address_list=None, output_collection=None):
     if check_time is None:
         check_time = datetime.datetime.now()
 
@@ -36,6 +35,12 @@ async def addresses_unspent_txs(last_block_height, check_time=None, address_list
     #     matches.append({
     #         '$match': {'outputs.address': {'$in': address_list}}
     #     })
+
+    outputs = []
+    if output_collection is not None:
+        outputs = [{
+            '$out': output_collection
+        }]
 
     aggregate = Transaction.collection.aggregate(
         matches + [{'$unwind': '$outputs'}] + matches + [
@@ -100,10 +105,8 @@ async def addresses_unspent_txs(last_block_height, check_time=None, address_list
             'available_value': {'$subtract': ['$unspent_value', '$locked_value']}
         }},
         {'$sort': {'unspent_value': -1}}
-    ], allowDiskUse=(address_list is None))
+    ] + outputs, allowDiskUse=(address_list is None))
     items = [item async for item in aggregate]
-    t2 = datetime.datetime.now()
-    print(t2-t1)
     return items
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
@@ -233,11 +236,15 @@ app.router.add_get('/addresses/aliases/page/{page}', aliases)
 async def address_list(request):
     """ Addresses view
     """
+
+    from nulsexplorer.model import db
+
     last_height = await get_last_block_height()
-    addresses = await addresses_unspent_txs(await cache_last_block_height())
-    total_addresses = len(addresses)
+    ##addresses = await addresses_unspent_txs(await cache_last_block_height())
+    total_addresses = await db.cached_unspent.count()
     page = int(request.match_info.get('page', '1'))
-    addresses = addresses[(page-1)*PER_PAGE_SUMMARY:((page-1)*PER_PAGE_SUMMARY)+PER_PAGE_SUMMARY]
+    addresses = db.cached_unspent.find(skip=(page-1)*PER_PAGE_SUMMARY, limit=PER_PAGE_SUMMARY)
+    addresses = [addr async for addr in addresses]
 
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_addresses)
 
