@@ -348,10 +348,13 @@ async def address_available_outputs(request):
             if output['status'] >= 3:
                 continue # spent
 
+            if output['value'] <= 0:
+                continue # something went wrong
+
             if lock_time == -1:
                 continue # consensus locked
 
-            if (lock_time < 1000000000000) and (lock_time > last_height):
+            if (lock_time < 1000000000000) and (lock_time >= last_height):
                 continue # time locked on a future block
 
             if lock_time > db_time:
@@ -360,7 +363,8 @@ async def address_available_outputs(request):
             outputs.append({
                 'hash': tx_hash,
                 'idx': idx,
-                'value': output['value']
+                'value': output['value'],
+                'lockTime': lock_time
             })
 
     context = {'outputs': outputs,
