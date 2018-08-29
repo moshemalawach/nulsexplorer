@@ -49,7 +49,12 @@ async def request_block(session, height=None, hash=None):
 
     if hash is not None:
         resp = await api_request(session, 'block/bytes?hash=%s' % hash)
-        block.update(Block(base64.b64decode(resp['value'])).to_dict())
+        try:
+            block.update(Block(base64.b64decode(resp['value'])).to_dict())
+        except Exception as e:
+            LOGGER.error("Error reading block %d" % height)
+            LOGGER.exception(e)
+            LOGGER.info("Using block content %r instead." % block)
     else:
         raise ValueError("Neither height nor hash set for block request")
 
