@@ -39,7 +39,7 @@ async def request_last_height(session):
         last_height = resp.get('value', -1)
     return last_height
 
-async def request_block(session, height=None, hash=None):
+async def request_block(session, height=None, hash=None, use_bytes=True):
     last_height = -1
     block = {}
     if height is not None:
@@ -48,13 +48,14 @@ async def request_block(session, height=None, hash=None):
         hash = resp['hash']
 
     if hash is not None:
-        resp = await api_request(session, 'block/bytes?hash=%s' % hash)
-        try:
-            block.update(Block(base64.b64decode(resp['value'])).to_dict())
-        except Exception as e:
-            LOGGER.error("Error reading block %d" % height)
-            LOGGER.exception(e)
-            LOGGER.info("Using block content %r instead." % block)
+        if use_bytes:
+            resp = await api_request(session, 'block/bytes?hash=%s' % hash)
+            try:
+                block.update(Block(base64.b64decode(resp['value'])).to_dict())
+            except Exception as e:
+                LOGGER.error("Error reading block %d" % height)
+                LOGGER.exception(e)
+                LOGGER.info("Using block content %r instead." % block)
     else:
         raise ValueError("Neither height nor hash set for block request")
 
@@ -84,9 +85,15 @@ async def check_blocks():
                      upsert=True)
 
                 for block_height in range(last_stored_height+1, last_height+1):
-                    block = await request_block(session, height=block_height)
-                    LOGGER.info("Synchronizing block #%d" % block['height'])
-                    await store_block(block)
+                    try:
+                        block = await request_block(session, height=block_height)
+                        LOGGER.info("Synchronizing block #%d" % block['height'])
+                        await store_block(block)
+                    except OverflowError:
+                        LOGGER.error("Error storing block #%d" % block['height'])
+                        LOGGER.info("Using upstream data for block #%d" % block['height'])
+                        block = await request_block(session, height=block_height, use_bytes=False)
+                        await store_block(block)
                     last_stored_height = block['height']
 
         await asyncio.sleep(8)
