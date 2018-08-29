@@ -91,7 +91,6 @@ class Block(BaseNulsData):
             self.parse(data)
 
     def parse(self, buffer):
-        print(buffer.hex())
         self.size = len(buffer)
         self.header = BlockHeader()
         cursor = self.header.parse(buffer)
