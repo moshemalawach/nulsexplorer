@@ -14,7 +14,7 @@ def get_defaults():
           'port': 8001,
           'path': '/api/',
           'base_uri': 'http://127.0.0.1:8001/api/',
-          'network_id': 8964
+          'chain_id': 8964
         },
         'mongodb': {
           'uri': 'mongodb://127.0.0.1:27006',

@@ -8,7 +8,7 @@ nuls:
   port: 6001
   path: /api/
   base_uri: "http://127.0.0.1:6001/api/"
-  network_id: 8964
+  chain_id: 8964
 
 mongodb:
   uri: "mongodb://127.0.0.1"
