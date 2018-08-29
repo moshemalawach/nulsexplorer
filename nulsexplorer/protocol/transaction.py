@@ -30,9 +30,13 @@ class Coin(BaseNulsData):
         if len(owner) > ADDRESS_LENGTH:
             val = (len(owner) - HASH_LENGTH)
             if (val > 1):
-                raise ValueError("Long int for index found")
-            self.fromHash = owner[:HASH_LENGTH-len(owner)]
-            self.fromIndex = owner[-1]
+                fc = VarInt()
+                fc.parse(owner, HASH_LENGTH)
+                self.fromIndex = fc.value
+                assert fc.originallyEncodedSize == val
+            else:
+                self.fromIndex = owner[-1]
+            self.fromHash = owner[:HASH_LENGTH]
         else:
             self.address = owner
 
