@@ -14,6 +14,9 @@ from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
 
 from aiocache import cached, SimpleMemoryCache
 
+import logging
+LOGGER = logging.getLogger(__name__)
+
 @cached(ttl=60*120, cache=SimpleMemoryCache)
 async def cache_last_block_height():
     return await get_last_block_height()
@@ -374,7 +377,64 @@ async def address_available_outputs(request):
     return web.json_response(context, dumps=lambda v: json.dumps(v,
                                                      default=json_util.default))
 
+async def address_consensus(request):
+    last_height = await get_last_block_height()
+    address = request.match_info['address']
+
+    where_query = {'$or':
+                    [{'outputs.address': address},
+                     {'inputs.address': address}]}
+    where_query = {'$and': [
+        {'type': {'$gt': 3}}, # consensus actions
+        {'type': {'$lt': 10}}, # in the future, there will be more actions, ignore them.
+        where_query
+    ]}
+
+    positions = []
+
+    async for tx in Transaction.collection.find(where_query,
+                                                sort=[('time', 1)]):
+        info = tx.get('info', {})
+        if tx['type'] == 4: # registering a consensus node
+            position = {
+                'value': info.get('deposit', 0),
+                'agentHash': tx['hash'],
+                'hash': tx['hash'],
+                'active': True
+            }
+            positions.append(position)
+
+        elif tx['type'] == 5: # join a consensus
+            position = {
+                'value': info.get('deposit', 0),
+                'agentHash': info.get('agentHash'),
+                'hash': tx['hash'],
+                'active': True
+            }
+            positions.append(position)
+
+        elif tx['type'] == 6: # cancel a consensus
+            join_hash = info.get('joinTxHash')
+            try:
+                position = next(pos for pos in positions
+                                if pos['hash'] == join_hash)
+                position['active'] = False
+                position['cancelHash'] = tx['hash']
+            except StopIteration:
+                continue
+
+         # we don't cover other types (yet)
+         # important ones to cover would be red cards and unregister nodes
+
+    context = {'positions': positions,
+               'last_height': last_height}
+    return web.json_response(context, dumps=lambda v: json.dumps(v,
+                                                     default=json_util.default))
+
+
+
 app.router.add_get('/addresses/outputs/{address}.json', address_available_outputs)
+app.router.add_get('/addresses/consensus/{address}.json', address_consensus)
 
 app.router.add_get('/addresses/{address}.json', view_address)
 app.router.add_get('/addresses/{address}', view_address)

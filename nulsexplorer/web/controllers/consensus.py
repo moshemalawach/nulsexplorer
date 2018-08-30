@@ -1,6 +1,8 @@
 import aiohttp_jinja2
 from aiohttp import web
 from aiocache import cached, SimpleMemoryCache
+from bson import json_util
+import json
 from nulsexplorer.model.consensus import Consensus
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
@@ -118,6 +120,39 @@ async def view_consensus(request):
 
 app.router.add_get('/consensus.json', view_consensus)
 app.router.add_get('/consensus', view_consensus)
+
+async def view_agents(request):
+    """ Address view
+    """
+    last_height = await get_last_block_height()
+    height = int(request.query.get('height', last_height))
+
+    if height < last_height:
+        consensus = await Consensus.collection.find_one({'height': height})
+    else:
+        consensus = await Consensus.collection.find_one(sort=[('height', -1)])
+
+    if consensus is None:
+        raise web.HTTPNotFound(text="Consensus height not found")
+
+    #db.blocks.aggregate({$match: {'height': {'$gt': 40000}}},     )
+    node_count = len(consensus['agents'])
+    total_deposit = sum([a['totalDeposit'] + a['deposit'] for a in consensus['agents']])
+    active_count = len([a for a in consensus['agents'] if a['status'] == 1])
+
+    agents = {agent['agentHash']: agent for agent in consensus['agents']}
+
+    context = {
+            'agents': agents,
+            'height': height,
+            'last_height': last_height,
+            'node_count': node_count,
+            'total_deposit': total_deposit}
+
+    return web.json_response(context, dumps=lambda v: json.dumps(v,
+                                                     default=json_util.default))
+
+app.router.add_get('/consensus/agents.json', view_agents)
 
 # @aiohttp_jinja2.template('consensus_list.html')
 async def view_consensus_list(request):
