@@ -273,6 +273,8 @@ async def view_address(request):
     last_height = await get_last_block_height()
     address = request.match_info['address']
     mode = request.match_info.get('mode', 'summary')
+    sort = [('time', -1)]
+
     if mode not in ['summary', 'full-summary', 'detail']:
         raise web.HTTPNotFound(text="Display mode not found")
     per_page = PER_PAGE
@@ -281,6 +283,7 @@ async def view_address(request):
 
     if request.rel_url.path.endswith('/all.json'):
         per_page = 10000
+        sort = [('type', -1), ('time', -1)]
 
     page = int(request.match_info.get('page', '1'))
     where_query = {'$or':
@@ -294,9 +297,8 @@ async def view_address(request):
         ]}
     tx_count = await Transaction.count(where_query)
 
-    transactions = [tx._data async for tx in Transaction.find(where_query,
-                                                        sort='time',
-                                                        sort_order=-1,
+    transactions = [tx async for tx in Transaction.collection.find(where_query,
+                                                        sort=sort,
                                                         limit=per_page,
                                                         skip=(page-1)*per_page)]
 
