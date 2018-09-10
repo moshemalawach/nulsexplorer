@@ -266,6 +266,21 @@ app.router.add_get('/addresses.json', address_list)
 app.router.add_get('/addresses/page/{page}', address_list)
 app.router.add_get('/addresses/page/{page}.json', address_list)
 
+async def addresses_stats(request):
+    print(request.query)
+    addresses = request.query.getall('addresses[]', [])
+    print(addresses)
+    last_height = await get_last_block_height()
+    unspent_info = {}
+    if len(addresses):
+        unspent_info = await addresses_unspent_info(last_height,
+                                                    address_list=addresses)
+    context = {'unspent_info': unspent_info,
+               'last_height': last_height}
+    return web.json_response(context, dumps=lambda v: json.dumps(v,
+                                                     default=json_util.default))
+app.router.add_get('/addresses/stats', addresses_stats)
+
 #@aiohttp_jinja2.template('address.html')
 async def view_address(request):
     """ Address view
@@ -432,7 +447,6 @@ async def address_consensus(request):
                'last_height': last_height}
     return web.json_response(context, dumps=lambda v: json.dumps(v,
                                                      default=json_util.default))
-
 
 
 app.router.add_get('/addresses/outputs/{address}.json', address_available_outputs)
