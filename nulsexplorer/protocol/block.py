@@ -40,7 +40,7 @@ class BlockHeader(BaseNulsData):
         self.extend = None
         self.scriptSig = None
         self.raw_data = None
-        self.stateRoot = None
+        self.stateRoot = b""
         self.has_stateroot = has_stateroot
 
         if data is not None:
@@ -85,7 +85,6 @@ class BlockHeader(BaseNulsData):
         # WARNING: This will likely be removed.
         if self.has_stateroot:
             out += write_with_length(self.stateRoot)
-            cursor += pos
 
         return out
 
