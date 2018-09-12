@@ -1,7 +1,9 @@
 from nulsexplorer.protocol.data import (write_with_length, read_by_length,
-                                        hash_from_address, VarInt,
+                                        hash_from_address, address_from_hash,
+                                        VarInt,
                                         parse_varint, write_varint)
 from nulsexplorer.protocol.register import register_tx_type
+from .base import BaseModuleData
 
 class CreateContractData(BaseModuleData):
     @classmethod
@@ -81,7 +83,8 @@ class CallContractData(BaseModuleData):
             cursor += 1
             arg = []
             for j in range(arglen):
-                cursor, argcontent = read_by_length(buffer, cursor=cursor)
+                pos, argcontent = read_by_length(buffer, cursor=cursor)
+                cursor += pos
                 arg.append(argcontent)
 
             args.append(arg)

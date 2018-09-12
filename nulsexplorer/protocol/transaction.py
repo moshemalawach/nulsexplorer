@@ -158,20 +158,19 @@ class Transaction(BaseNulsData):
             self.parse(data)
 
     def _parse_data(self, buffer, cursor=0):
-        md = self.module_data
 
         if self.type in TX_TYPES_REGISTER:
-            md, cursor = TX_TYPES_REGISTER[self.type].from_buffer(buffer, cursor)
+            cursor, self.module_data = TX_TYPES_REGISTER[self.type].from_buffer(
+                buffer, cursor)
         else:
             cursor += len(PLACE_HOLDER)
 
         return cursor
 
     def _write_data(self):
-        md = self.module_data
         output = b""
         if self.type in TX_TYPES_REGISTER:
-            output += TX_TYPES_REGISTER[self.type].to_buffer(md)
+            output += TX_TYPES_REGISTER[self.type].to_buffer(self.module_data)
         else:
             output += PLACE_HOLDER
 

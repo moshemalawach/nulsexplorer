@@ -1,6 +1,7 @@
 from nulsexplorer.protocol.data import (write_with_length, read_by_length,
                                         hash_from_address)
 from nulsexplorer.protocol.register import register_tx_type
+from .base import BaseModuleData
 from binascii import hexlify, unhexlify
 
 class BusinessData(BaseModuleData):
