@@ -19,6 +19,8 @@ class CreateContractData(BaseModuleData):
         cursor, md['codeLen'] = parse_varint(buffer, cursor)
         pos, md['code'] = read_by_length(buffer, cursor=cursor)
         cursor += pos
+        md['code'] = md['code'].hex()
+
         cursor, md['gasLimit'] = parse_varint(buffer, cursor)
         cursor, md['price'] = parse_varint(buffer, cursor)
         argslen = int(buffer[cursor])
@@ -44,7 +46,7 @@ class CreateContractData(BaseModuleData):
         output += write_with_length(hash_from_address(md['contractAddress']))
         output += write_varint(md['value'])
         output += write_varint(md['codeLen'])
-        output += write_with_length(md['code'])
+        output += write_with_length(unhexlify(md['code']))
         output += write_varint(md['gasLimit'])
         output += write_varint(md['price'])
         output += bytes([len(md['args'])])
