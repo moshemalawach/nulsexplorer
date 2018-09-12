@@ -105,8 +105,10 @@ class RedCardData(BaseModuleData):
     @classmethod
     def from_buffer(cls, buffer, cursor=0):
         md = dict()
-        pos, md['address'] = read_by_length(buffer, cursor)
-        cursor += pos
+        #pos, md['address'] = read_by_length(buffer, cursor)
+        #cursor += pos
+        md['address'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
         md['address'] = address_from_hash(md['address'])
         md['reason'] = buffer[cursor]
         cursor += 1
@@ -117,7 +119,8 @@ class RedCardData(BaseModuleData):
 
     @classmethod
     def to_buffer(cls, md):
-        output = write_with_length(hash_from_address(md['address']))
+        #output = write_with_length(hash_from_address(md['address']))
+        output = hash_from_address(md['address'])
         output += VarInt(md['reason']).encode()
         output += write_with_length(unhexlify(md['evidence']))
         return output
