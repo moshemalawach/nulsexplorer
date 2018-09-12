@@ -31,7 +31,7 @@ class P2PKHScriptSig(BaseNulsData):
                + write_with_length(self.sign_bytes)
 
 class BlockHeader(BaseNulsData):
-    def __init__(self, data=None):
+    def __init__(self, data=None, has_stateroot=False):
         self.preHash = None
         self.merkleHash = None
         self.time = None
@@ -40,6 +40,8 @@ class BlockHeader(BaseNulsData):
         self.extend = None
         self.scriptSig = None
         self.raw_data = None
+        self.stateRoot = None
+        self.has_stateroot = has_stateroot
 
         if data is not None:
             self.parse(data)
@@ -64,8 +66,9 @@ class BlockHeader(BaseNulsData):
         cursor += self.scriptSig.size
 
         # WARNING: This will likely be removed.
-        pos, self.stateRoot = read_by_length(buffer, cursor, check_size=True)
-        cursor += pos
+        if self.has_stateroot:
+            pos, self.stateRoot = read_by_length(buffer, cursor, check_size=True)
+            cursor += pos
 
         self.raw_data = buffer[:cursor]
         return cursor
@@ -78,6 +81,12 @@ class BlockHeader(BaseNulsData):
         out += struct.pack("II", self.height, self.txCount)
         out += write_with_length(self.extend)
         out += self._prepare(self.scriptSig)
+
+        # WARNING: This will likely be removed.
+        if self.has_stateroot:
+            out += write_with_length(self.stateRoot)
+            cursor += pos
+
         return out
 
     def __str__(self):
