@@ -56,6 +56,7 @@ async def request_block(session, height=None, hash=None, use_bytes=True):
                 LOGGER.error("Error reading block %d" % height)
                 LOGGER.exception(e)
                 LOGGER.info("Using block content %r instead." % block)
+                raise
     else:
         raise ValueError("Neither height nor hash set for block request")
 
