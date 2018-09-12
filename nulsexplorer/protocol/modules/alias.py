@@ -12,7 +12,7 @@ class AliasData(BaseModuleData):
         pos, md['alias'] = read_by_length(buffer, cursor)
         cursor += pos
         md['alias'] = md['alias'].decode('utf-8')
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):

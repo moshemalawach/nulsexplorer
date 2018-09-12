@@ -34,7 +34,7 @@ class CreateContractData(BaseModuleData):
             args.append(arg)
 
         md['args'] = args
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -87,7 +87,7 @@ class CallContractData(BaseModuleData):
             args.append(arg)
 
         md['args'] = args
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -117,7 +117,7 @@ class DeleteContractData(BaseModuleData):
         pos, md['contractAddress'] = read_by_length(buffer, cursor=cursor)
         cursor += pos
         md['contractAddress'] = address_from_hash(md['contractAddress'])
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -131,7 +131,7 @@ class TransferContractData(BaseModuleData):
     @classmethod
     def from_buffer(cls, buffer, cursor=0):
         md = dict()
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):

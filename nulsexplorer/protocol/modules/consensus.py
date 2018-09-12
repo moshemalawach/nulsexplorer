@@ -7,6 +7,7 @@ from nulsexplorer.protocol.data import (write_with_length, read_by_length,
                                         hash_from_address,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
 from nulsexplorer.protocol.register import register_tx_type
+from binascii import hexlify, unhexlify
 
 class RegisterAgentData(BaseModuleData):
     @classmethod
@@ -25,7 +26,7 @@ class RegisterAgentData(BaseModuleData):
         md['rewardAddress'] = address_from_hash(md['rewardAddress'])
         md['commissionRate'] = struct.unpack("d", buffer[cursor:cursor+8])[0]
         cursor += 8
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -49,7 +50,7 @@ class JoinConsensusData(BaseModuleData):
         md['address'] = address_from_hash(md['address'])
         md['agentHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
         cursor += HASH_LENGTH
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -66,7 +67,7 @@ class CancelDepositData(BaseModuleData):
         md = dict()
         md['joinTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
         cursor += HASH_LENGTH
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -86,7 +87,7 @@ class YellowCardData(BaseModuleData):
             addresses.append(buffer[cursor:cursor+ADDRESS_LENGTH])
             cursor += ADDRESS_LENGTH
         md['addresses'] = list(map(address_from_hash, addresses))
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -110,7 +111,7 @@ class RedCardData(BaseModuleData):
         pos, md['evidence'] = read_by_length(buffer, cursor)
         cursor += pos
         md['evidence'] = md['evidence'].hex()
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
@@ -128,7 +129,7 @@ class StopAgentData(BaseModuleData):
         md = dict()
         md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
         cursor += HASH_LENGTH
-        return md, cursor
+        return cursor, md
 
     @classmethod
     def to_buffer(cls, md):
