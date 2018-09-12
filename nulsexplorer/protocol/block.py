@@ -63,6 +63,10 @@ class BlockHeader(BaseNulsData):
         self.scriptSig = P2PKHScriptSig(data=buffer[cursor:])
         cursor += self.scriptSig.size
 
+        # WARNING: This will likely be removed.
+        pos, self.stateRoot = read_by_length(buffer, cursor, check_size=True)
+        cursor += pos
+
         self.raw_data = buffer[:cursor]
         return cursor
 
