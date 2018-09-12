@@ -87,7 +87,7 @@ class CallContractData(BaseModuleData):
             for j in range(arglen):
                 pos, argcontent = read_by_length(buffer, cursor=cursor)
                 cursor += pos
-                arg.append(argcontent)
+                arg.append(argcontent.decode('utf-8'))
 
             args.append(arg)
 
