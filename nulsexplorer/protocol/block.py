@@ -96,16 +96,17 @@ class BlockHeader(BaseNulsData):
         )
 
 class Block(BaseNulsData):
-    def __init__(self, data=None):
+    def __init__(self, data=None, has_stateroot=False):
         self.header = None
         self.transactions = None
+        self.has_stateroot = has_stateroot
 
         if data is not None:
             self.parse(data)
 
     def parse(self, buffer):
         self.size = len(buffer)
-        self.header = BlockHeader()
+        self.header = BlockHeader(has_stateroot=self.has_stateroot)
         cursor = self.header.parse(buffer)
 
         self.transactions = list()
