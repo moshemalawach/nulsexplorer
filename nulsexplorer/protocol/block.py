@@ -7,11 +7,11 @@ from nulsexplorer.protocol.transaction import Transaction
 class P2PKHScriptSig(BaseNulsData):
     DEFAULT_SERIALIZE_LENGTH = 110
 
-    def __init__(self, data=None):
+    def __init__(self):
         self.public_key = None
 
-        if data is not None:
-            self.parse(data)
+        #if data is not None:
+        #    self.parse(data)
 
     def parse(self, buffer, cursor=0):
         pos, self.public_key = read_by_length(buffer, cursor=cursor)
@@ -46,7 +46,7 @@ class BlockHeader(BaseNulsData):
         if data is not None:
             self.parse(data)
 
-    def parse(self, buffer, cursor=0):
+    async def parse(self, buffer, cursor=0):
         self.preHash = NulsDigestData(data=buffer)
         cursor += self.preHash.size
         self.merkleHash = NulsDigestData(data=buffer[cursor:])
@@ -73,7 +73,7 @@ class BlockHeader(BaseNulsData):
         self.raw_data = buffer[:cursor]
         return cursor
 
-    def serialize(self):
+    async def serialize(self):
         out = bytes()
         out += self._prepare(self.preHash)
         out += self._prepare(self.merkleHash)
@@ -100,18 +100,18 @@ class Block(BaseNulsData):
         self.transactions = None
         self.has_stateroot = has_stateroot
 
-        if data is not None:
-            self.parse(data)
+        #if data is not None:
+        #    self.parse(data)
 
-    def parse(self, buffer):
+    async def parse(self, buffer):
         self.size = len(buffer)
         self.header = BlockHeader(has_stateroot=self.has_stateroot)
-        cursor = self.header.parse(buffer)
+        cursor = await self.header.parse(buffer)
 
         self.transactions = list()
         for ntx in range(self.header.txCount):
             tx = Transaction(height=self.header.height)
-            cursor = tx.parse(buffer, cursor)
+            cursor = await tx.parse(buffer, cursor)
             self.transactions.append(tx)
 
     def __str__(self):
@@ -119,7 +119,7 @@ class Block(BaseNulsData):
             self.header
         )
 
-    def to_dict(self):
+    async def to_dict(self):
         return {
             'hash': str(self.header.hash),
             'preHash': str(self.header.preHash),
@@ -129,16 +129,17 @@ class Block(BaseNulsData):
             'txCount': self.header.txCount,
             'extend': self.header.extend.hex(),
             'size': self.size,
+            'stateRoot': self.header.stateRoot.hex(),
             'reward': sum([t.coin_data.get_output_sum() for t in self.transactions if t.type == 1]),
             'fee': sum([t.coin_data.get_fee() for t in self.transactions if t.type != 1]),
-            'txList': [t.to_dict() for t in self.transactions]
+            'txList': [await t.to_dict() for t in self.transactions]
         }
 
-    def serialize(self):
+    async def serialize(self):
         output = b""
-        output += self.header.serialize()
+        output += await self.header.serialize()
         for tx in self.transactions:
-            output += tx.serialize()
+            output += await tx.serialize()
         return output
 
 def read_block_header(bytes):

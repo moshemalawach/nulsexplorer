@@ -13,7 +13,7 @@ import struct
 
 class RegisterAgentData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
         cursor += 8
@@ -31,7 +31,7 @@ class RegisterAgentData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = struct.pack("Q", md['deposit'])
         output += hash_from_address(md['agentAddress'])
         output += hash_from_address(md['packingAddress'])
@@ -43,7 +43,7 @@ register_tx_type(4, RegisterAgentData)
 
 class JoinConsensusData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
         cursor += 8
@@ -55,7 +55,7 @@ class JoinConsensusData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = struct.pack("Q", md['deposit'])
         output += hash_from_address(md['address'])
         output += unhexlify(md['agentHash'])
@@ -65,14 +65,14 @@ register_tx_type(5, JoinConsensusData)
 
 class CancelDepositData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         md['joinTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
         cursor += HASH_LENGTH
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = unhexlify(md['joinTxHash'])
         return output
 
@@ -80,7 +80,7 @@ register_tx_type(6, CancelDepositData)
 
 class YellowCardData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         md['count'] = buffer[cursor]
         cursor += 1
@@ -92,7 +92,7 @@ class YellowCardData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = VarInt(md['count']).encode()
         for address in md['addresses']:
             output += hash_from_address(address)
@@ -103,7 +103,7 @@ register_tx_type(7, YellowCardData)
 
 class RedCardData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         #pos, md['address'] = read_by_length(buffer, cursor)
         #cursor += pos
@@ -118,7 +118,7 @@ class RedCardData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         #output = write_with_length(hash_from_address(md['address']))
         output = hash_from_address(md['address'])
         output += VarInt(md['reason']).encode()
@@ -130,14 +130,14 @@ register_tx_type(8, RedCardData)
 
 class StopAgentData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
         cursor += HASH_LENGTH
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = unhexlify(md['createTxHash'])
         return output
 

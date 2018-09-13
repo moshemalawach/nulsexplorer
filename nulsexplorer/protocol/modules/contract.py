@@ -7,7 +7,7 @@ from .base import BaseModuleData
 
 class CreateContractData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         pos, md['sender'] = read_by_length(buffer, cursor=cursor)
         cursor += pos
@@ -41,7 +41,7 @@ class CreateContractData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = write_with_length(hash_from_address(md['sender']))
         output += write_with_length(hash_from_address(md['contractAddress']))
         output += write_varint(md['value'])
@@ -60,7 +60,7 @@ register_tx_type(100, CreateContractData)
 
 class CallContractData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         pos, md['sender'] = read_by_length(buffer, cursor=cursor)
         cursor += pos
@@ -95,7 +95,7 @@ class CallContractData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = write_with_length(hash_from_address(md['sender']))
         output += write_with_length(hash_from_address(md['contractAddress']))
         output += write_varint(md['value'])
@@ -114,7 +114,7 @@ register_tx_type(101, CallContractData)
 
 class DeleteContractData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         pos, md['sender'] = read_by_length(buffer, cursor=cursor)
         cursor += pos
@@ -125,7 +125,7 @@ class DeleteContractData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = write_with_length(hash_from_address(md['sender']))
         output += write_with_length(hash_from_address(md['contractAddress']))
         return output
@@ -134,12 +134,12 @@ register_tx_type(102, DeleteContractData)
 
 class TransferContractData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         return output
 
 #register_tx_type(103, TransferContractData)

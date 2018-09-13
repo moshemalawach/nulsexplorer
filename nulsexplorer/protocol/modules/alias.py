@@ -5,7 +5,7 @@ from .base import BaseModuleData
 
 class AliasData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         pos, md['address'] = read_by_length(buffer, cursor)
         cursor += pos
@@ -16,7 +16,7 @@ class AliasData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = write_with_length(hash_from_address(md['address']))
         output += write_with_length(md['alias'].encode('utf-8'))
         return output

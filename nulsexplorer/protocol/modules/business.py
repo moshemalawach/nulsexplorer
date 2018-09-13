@@ -6,7 +6,7 @@ from binascii import hexlify, unhexlify
 
 class BusinessData(BaseModuleData):
     @classmethod
-    def from_buffer(cls, buffer, cursor=0):
+    async def from_buffer(cls, buffer, cursor=0):
         md = dict()
         pos, md['logicData'] = read_by_length(buffer, cursor)
         cursor += pos
@@ -14,7 +14,7 @@ class BusinessData(BaseModuleData):
         return cursor, md
 
     @classmethod
-    def to_buffer(cls, md):
+    async def to_buffer(cls, md):
         output = write_with_length(unhexlify(md['logicData']))
         return output
 
