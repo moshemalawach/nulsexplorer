@@ -2,7 +2,7 @@ from nulsexplorer.protocol.data import (write_with_length, read_by_length,
                                         hash_from_address, address_from_hash,
                                         VarInt,
                                         parse_varint, write_varint)
-from nulsexplorer.protocol.register import register_tx_type
+from nulsexplorer.protocol.register import register_tx_type, register_tx_filter
 from .base import BaseModuleData
 
 class CreateContractData(BaseModuleData):
@@ -144,3 +144,11 @@ class TransferContractData(BaseModuleData):
 
 #register_tx_type(103, TransferContractData)
 # not implemented for now...
+
+async def process_contract_data(tx):
+    # This function takes a tx dict and modifies it in place.
+    # we assume we have access to a config since we are in a processor
+    from nulsexplorer.main import api_request
+
+
+register_tx_processor([100,101,102,103], process_contract_data)
