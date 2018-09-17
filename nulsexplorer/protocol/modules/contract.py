@@ -2,7 +2,7 @@ from nulsexplorer.protocol.data import (write_with_length, read_by_length,
                                         hash_from_address, address_from_hash,
                                         VarInt,
                                         parse_varint, write_varint)
-from nulsexplorer.protocol.register import register_tx_type, register_tx_filter
+from nulsexplorer.protocol.register import register_tx_type, register_tx_processor
 from .base import BaseModuleData
 
 class CreateContractData(BaseModuleData):
