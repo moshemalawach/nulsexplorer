@@ -59,7 +59,7 @@ class BlockHeader(BaseNulsData):
         pos, self.extend = read_by_length(buffer, cursor, check_size=True)
         cursor += pos
 
-        self.hash_bytes = hash_twice(self.serialize())
+        self.hash_bytes = hash_twice(await self.serialize())
         self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
 
         self.scriptSig = P2PKHScriptSig(data=buffer[cursor:])

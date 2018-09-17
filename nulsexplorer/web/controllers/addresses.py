@@ -267,9 +267,7 @@ app.router.add_get('/addresses/page/{page}', address_list)
 app.router.add_get('/addresses/page/{page}.json', address_list)
 
 async def addresses_stats(request):
-    print(request.query)
     addresses = request.query.getall('addresses[]', [])
-    print(addresses)
     last_height = await get_last_block_height()
     unspent_info = {}
     if len(addresses):
