@@ -113,8 +113,8 @@ async def check_blocks():
                         await store_block(block)
                     last_stored_height = block['height']
 
-                    if i > 100000:
-                        break
+                    #if i > 100000:
+                    #    break
 
                 if big_batch:
                     await model.db.blocks.insert_many(
