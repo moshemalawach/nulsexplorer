@@ -289,6 +289,7 @@ async def view_address(request):
     address = request.match_info['address']
     mode = request.match_info.get('mode', 'summary')
     sort = [('time', -1)]
+    min_height = request.query.get('min_height', None)
 
     if mode not in ['summary', 'full-summary', 'detail']:
         raise web.HTTPNotFound(text="Display mode not found")
@@ -310,6 +311,11 @@ async def view_address(request):
             {'type': {'$ne': 1}},
             where_query
         ]}
+        #print(min_height)
+
+        if min_height is not None:
+            where_query['$and'].append({'blockHeight': {'$gt': int(min_height)}})
+
     tx_count = await Transaction.count(where_query)
 
     transactions = [tx async for tx in Transaction.collection.find(where_query,
