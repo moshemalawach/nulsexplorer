@@ -7,11 +7,11 @@ from nulsexplorer.protocol.transaction import Transaction
 class P2PKHScriptSig(BaseNulsData):
     DEFAULT_SERIALIZE_LENGTH = 110
 
-    def __init__(self):
+    def __init__(self, data=None):
         self.public_key = None
 
-        #if data is not None:
-        #    self.parse(data)
+        if data is not None:
+            self.parse(data)
 
     def parse(self, buffer, cursor=0):
         pos, self.public_key = read_by_length(buffer, cursor=cursor)
