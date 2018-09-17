@@ -76,7 +76,8 @@ class Transaction(BaseClass):
                         ('outputs.%d.status' % fidx): 3,
                         ('outputs.%d.toHash' % fidx): transaction['hash'],
                         ('outputs.%d.toIndex' % fidx): i
-                    }})
+                    }},
+                    projection=['outputs'])
 
             if source_tx is not None:
                 in_from = source_tx['outputs'][inputdata['fromIndex']]

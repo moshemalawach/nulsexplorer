@@ -43,24 +43,24 @@ async def request_block(session, height=None, hash=None, use_bytes=True):
     last_height = -1
     block = {}
     if height is not None:
-        resp = await api_request(session, 'block/height/%d' % height)
+        resp = await api_request(session, 'block/header/height/%d' % height)
         block = resp
         hash = resp['hash']
 
     if hash is not None:
         if use_bytes:
             resp = await api_request(session, 'block/bytes?hash=%s' % hash)
-            if any([tx["type"] > 2 for tx in block["txList"]]):
+            #if any([tx["type"] > 2 for tx in block["txList"]]):
                 # only parse full block if needed...
-                try:
-                    block_obj = Block(has_stateroot=app['config'].nuls.has_stateroot.value)
-                    await block_obj.parse(base64.b64decode(resp['value']))
-                    block.update(await block_obj.to_dict())
-                except Exception as e:
-                    LOGGER.error("Error reading block %d" % height)
-                    LOGGER.exception(e)
-                    LOGGER.info("Using block content %r instead." % block)
-                    raise
+            try:
+                block_obj = Block(has_stateroot=app['config'].nuls.has_stateroot.value)
+                await block_obj.parse(base64.b64decode(resp['value']))
+                block.update(await block_obj.to_dict())
+            except Exception as e:
+                LOGGER.error("Error reading block %d" % height)
+                LOGGER.exception(e)
+                LOGGER.info("Using block content %r instead." % block)
+                raise
     else:
         raise ValueError("Neither height nor hash set for block request")
 
