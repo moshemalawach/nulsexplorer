@@ -6,9 +6,15 @@ import logging
 import operator
 LOGGER = logging.getLogger('model.blocks')
 
-async def store_block(block_data):
+async def store_block(block_data, big_batch=False,
+                      batch_blocks=None, batch_transactions=None):
     txs = block_data.pop("txList")
-    itxs = dict(zip(map(operator.itemgetter("hash"), txs), txs))
+    if batch_transactions is None:
+        batch_transactions = dict()
+
+    for tx in txs:
+        batch_transactions[tx['hash']] = tx
+    #itxs = dict(zip(map(operator.itemgetter("hash"), txs), txs))
 
     if len(txs):
         #for transaction in txs:
@@ -18,18 +24,23 @@ async def store_block(block_data):
             for transaction in txs:
                 ntxs.append(
                     await Transaction.input_txdata(transaction, batch_mode=True,
-                                                   batch_transactions=itxs)
+                                                   batch_transactions=batch_transactions)
                     )
-            await model.db.transactions.insert_many(txs)
+            if not big_batch:
+                await model.db.transactions.insert_many(txs)
         except:
             LOGGER.exception("woops")
-            for transaction in txs:
-                await Transaction.input_txdata(transaction)
+            if not big_batch:
+                for transaction in txs:
+                    await Transaction.input_txdata(transaction)
 
-    doc_id = await model.db.blocks.insert_one(block_data)
+    if not big_batch:
+        doc_id = await model.db.blocks.insert_one(block_data)
         # for now we forget about bulk insert as we have to do some work on it...
         # await model.db.transactions.insert_many(txs)
-    return doc_id
+        return doc_id
+    else:
+        batch_blocks[block_data['hash']] = block_data
 
 async def get_last_block(projection=None):
     query = model.db.blocks.find(projection=projection).sort([('height', -1)]).limit(1)
