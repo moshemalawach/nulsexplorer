@@ -53,7 +53,7 @@ async def request_block(session, height=None, hash=None, use_bytes=True):
             try:
                 block_obj = Block(has_stateroot=app['config'].nuls.has_stateroot.value)
                 await block_obj.parse(base64.b64decode(resp['value']))
-                block.update(block_obj.to_dict())
+                block.update(await block_obj.to_dict())
             except Exception as e:
                 LOGGER.error("Error reading block %d" % height)
                 LOGGER.exception(e)
