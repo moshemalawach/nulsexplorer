@@ -418,6 +418,7 @@ async def address_consensus(request):
         info = tx.get('info', {})
         if tx['type'] == 4: # registering a consensus node
             position = {
+                'type': 'node',
                 'value': info.get('deposit', 0),
                 'agentHash': tx['hash'],
                 'hash': tx['hash'],
@@ -427,6 +428,7 @@ async def address_consensus(request):
 
         elif tx['type'] == 5: # join a consensus
             position = {
+                'type': 'stake',
                 'value': info.get('deposit', 0),
                 'agentHash': info.get('agentHash'),
                 'hash': tx['hash'],
