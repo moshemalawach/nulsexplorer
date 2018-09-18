@@ -12,6 +12,7 @@ from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         address_from_hash,
                                         hash_from_address,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
+from nulsexplorer.protocol.register import TX_TYPES_REGISTER
 
 class Coin(BaseNulsData):
     def __init__(self, data=None):
@@ -97,10 +98,10 @@ class CoinData(BaseNulsData):
         self.inputs = list()
         self.outputs = list()
 
-        if data is not None:
-            self.parse(data)
+        #if data is not None:
+        #    self.parse(data)
 
-    def parse(self, buffer, cursor=0):
+    async def parse(self, buffer, cursor=0):
         if buffer[cursor:cursor+4] == PLACE_HOLDER:
             return cursor+4
 
@@ -133,7 +134,7 @@ class CoinData(BaseNulsData):
     def get_output_sum(self):
         return sum([o.na for o in self.outputs])
 
-    def serialize(self):
+    async def serialize(self):
         output = b""
         output += VarInt(len(self.inputs)).encode()
         for coin in self.inputs:
@@ -145,7 +146,7 @@ class CoinData(BaseNulsData):
         return output
 
 class Transaction(BaseNulsData):
-    def __init__(self, data=None, height=None):
+    def __init__(self, height=None):
         self.type = None
         self.time = None
         self.hash = None
@@ -153,83 +154,25 @@ class Transaction(BaseNulsData):
         self.scriptSig = None
         self.module_data = dict()
         self.coin_data = CoinData()
-        if data is not None:
-            self.parse(data)
 
-    def _parse_data(self, buffer, cursor=0):
-        md = self.module_data
+    async def _parse_data(self, buffer, cursor=0):
 
-        if self.type == 1: # consensus reward
+        if self.type in TX_TYPES_REGISTER:
+            cursor, self.module_data = await TX_TYPES_REGISTER[self.type].from_buffer(
+                buffer, cursor)
+        else:
             cursor += len(PLACE_HOLDER)
-
-        elif self.type == 2: # tranfer
-            cursor += len(PLACE_HOLDER)
-
-        elif self.type == 3: # alias
-            pos, md['address'] = read_by_length(buffer, cursor)
-            cursor += pos
-
-            pos, md['alias'] = read_by_length(buffer, cursor)
-            cursor += pos
-            md['alias'] = md['alias'].decode('utf-8')
-
-        elif self.type == 4: # register agent
-            md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
-            cursor += 8
-            md['agentAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
-            cursor += ADDRESS_LENGTH
-            md['agentAddress'] = address_from_hash(md['agentAddress'])
-            md['packingAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
-            cursor += ADDRESS_LENGTH
-            md['packingAddress'] = address_from_hash(md['packingAddress'])
-            md['rewardAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
-            cursor += ADDRESS_LENGTH
-            md['rewardAddress'] = address_from_hash(md['rewardAddress'])
-            md['commissionRate'] = struct.unpack("d", buffer[cursor:cursor+8])[0]
-            cursor += 8
-            return cursor
-
-        elif self.type == 5: # join consensus
-            md['deposit'] = struct.unpack("Q", buffer[cursor:cursor+8])[0]
-            cursor += 8
-            md['address'] = buffer[cursor:cursor+ADDRESS_LENGTH]
-            cursor += ADDRESS_LENGTH
-            md['address'] = address_from_hash(md['address'])
-            md['agentHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
-            cursor += HASH_LENGTH
-
-        elif self.type == 6: # cancel deposit
-            md['joinTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
-            cursor += HASH_LENGTH
-
-        elif self.type == 7: # yellow card
-            md['count'] = buffer[cursor]
-            cursor += 1
-            addresses = list()
-            for i in range(md['count']):
-                addresses.append(buffer[cursor:cursor+ADDRESS_LENGTH])
-                cursor += ADDRESS_LENGTH
-            md['addresses'] = list(map(address_from_hash, addresses))
-
-        elif self.type == 8: # red card
-            pos, md['address'] = read_by_length(buffer, cursor)
-            cursor += pos
-            md['address'] = address_from_hash(md['address'])
-            md['reason'] = buffer[cursor]
-            cursor += 1
-            pos, md['evidence'] = read_by_length(buffer, cursor)
-            cursor += pos
-            md['evidence'] = md['evidence'].hex()
-
-        elif self.type == 9: # stop agent
-            md['createTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
-            cursor += HASH_LENGTH
-
-        elif self.type == 10: # business data
-            pos, md['logicData'] = read_by_length(buffer, cursor)
-            cursor += pos
 
         return cursor
+
+    async def _write_data(self):
+        output = b""
+        if self.type in TX_TYPES_REGISTER:
+            output += await TX_TYPES_REGISTER[self.type].to_buffer(self.module_data)
+        else:
+            output += PLACE_HOLDER
+
+        return output
 
     def get_hash(self):
         values = bytes((self.type,)) \
@@ -242,7 +185,7 @@ class Transaction(BaseNulsData):
         hash = NulsDigestData(data=hash_bytes, alg_type=0)
         return hash
 
-    def parse(self, buffer, cursor=0):
+    async def parse(self, buffer, cursor=0):
         st_cursor = cursor
         self.type = struct.unpack("H", buffer[cursor:cursor+2])[0]
         cursor += 2
@@ -255,10 +198,10 @@ class Transaction(BaseNulsData):
         pos, self.remark = read_by_length(buffer, cursor, check_size=True)
         cursor += pos
 
-        cursor = self._parse_data(buffer, cursor)
+        cursor = await self._parse_data(buffer, cursor)
 
         self.coin_data = CoinData()
-        cursor = self.coin_data.parse(buffer, cursor)
+        cursor = await self.coin_data.parse(buffer, cursor)
         med_cursor = cursor
 
         values = bytes((self.type,)) \
@@ -276,7 +219,7 @@ class Transaction(BaseNulsData):
         return cursor
 
 
-    def to_dict(self):
+    async def to_dict(self):
         try:
             remark = self.remark and self.remark.decode('utf-8') or None
         except UnicodeDecodeError:
@@ -297,7 +240,7 @@ class Transaction(BaseNulsData):
         }
 
     @classmethod
-    def from_dict(cls, value):
+    async def from_dict(cls, value):
         item = cls()
         #item.hash = value.get('hash', '').encode('UTF-8')
         item.type = value['type']
@@ -320,64 +263,17 @@ class Transaction(BaseNulsData):
 
         return item
 
-    def _write_data(self):
-        md = self.module_data
-        output = b""
-
-        if self.type == 1: # consensus reward
-            output += PLACE_HOLDER
-
-        elif self.type == 2: # tranfer
-            output += PLACE_HOLDER
-
-        elif self.type == 3: # alias
-            output += write_with_length(hash_from_address(md['address']))
-            output += write_with_length(md['alias'].encode('utf-8'))
-
-        elif self.type == 4: # register agent
-            output += struct.pack("Q", md['deposit'])
-            output += hash_from_address(md['agentAddress'])
-            output += hash_from_address(md['packingAddress'])
-            output += hash_from_address(md['rewardAddress'])
-            output += struct.pack("d", md['commissionRate'])
-
-        elif self.type == 5: # join consensus
-            output += struct.pack("Q", md['deposit'])
-            output += hash_from_address(md['address'])
-            output += unhexlify(md['agentHash'])
-
-        elif self.type == 6: # cancel deposit
-            output += unhexlify(md['joinTxHash'])
-
-        elif self.type == 7: # yellow card
-            output += VarInt(md['count']).encode()
-            for address in md['addresses']:
-                output += hash_from_address(address)
-
-        elif self.type == 8: # red card
-            output += write_with_length(hash_from_address(md['address']))
-            output += VarInt(md['reason']).encode()
-            output += write_with_length(unhexlify(md['evidence']))
-
-        elif self.type == 9: # stop agent
-            output += unhexlify(md['createTxHash'])
-
-        elif self.type == 10: # stop agent
-            output += write_with_length(md['logicData'])
-
-        return output
-
-    def sign_tx(self, pri_key):
+    async def sign_tx(self, pri_key):
         self.signature = NulsSignature.sign_data(pri_key,
                                                  self.get_hash().digest_bytes)
         self.scriptSig = self.signature.serialize()
 
-    def serialize(self):
+    async def serialize(self):
         output = b""
         output += struct.pack("H", self.type)
         output += writeUint48(self.time)
         output += write_with_length(self.remark)
-        output += self._write_data()
-        output += self.coin_data.serialize()
+        output += await self._write_data()
+        output += await self.coin_data.serialize()
         output += self.scriptSig is not None and write_with_length(self.scriptSig) or PLACE_HOLDER
         return output

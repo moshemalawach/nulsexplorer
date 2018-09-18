@@ -228,6 +228,14 @@ def writeVarInt(number):
             break
     return buf
 
+def parse_varint(buffer, cursor):
+    fc = VarInt()
+    fc.parse(buffer, cursor)
+    return (fc.originallyEncodedSize+cursor, fc.value)
+
+def write_varint(value):
+    return VarInt(value).encode()
+
 def hash_twice(buffer):
     return sha256(sha256(buffer).digest()).digest()
 

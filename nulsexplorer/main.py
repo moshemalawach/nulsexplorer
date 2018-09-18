@@ -2,6 +2,7 @@ import asyncio
 import aiohttp
 import logging
 import base64
+import operator
 from nulsexplorer.web import app
 from nulsexplorer import model
 from nulsexplorer.model.blocks import get_last_block_height, store_block
@@ -43,19 +44,24 @@ async def request_block(session, height=None, hash=None, use_bytes=True):
     last_height = -1
     block = {}
     if height is not None:
-        resp = await api_request(session, 'block/height/%d' % height)
+        resp = await api_request(session, 'block/header/height/%d' % height)
         block = resp
         hash = resp['hash']
 
     if hash is not None:
         if use_bytes:
             resp = await api_request(session, 'block/bytes?hash=%s' % hash)
+            #if any([tx["type"] > 2 for tx in block["txList"]]):
+                # only parse full block if needed...
             try:
-                block.update(Block(base64.b64decode(resp['value'])).to_dict())
+                block_obj = Block(has_stateroot=app['config'].nuls.has_stateroot.value)
+                await block_obj.parse(base64.b64decode(resp['value']))
+                block.update(await block_obj.to_dict())
             except Exception as e:
                 LOGGER.error("Error reading block %d" % height)
                 LOGGER.exception(e)
                 LOGGER.info("Using block content %r instead." % block)
+                raise
     else:
         raise ValueError("Neither height nor hash set for block request")
 
@@ -71,10 +77,14 @@ async def check_blocks():
     if last_stored_height is None:
         last_stored_height = -1
 
+    big_batch = False
     LOGGER.info("Last block is #%d" % last_stored_height)
     while True:
         async with aiohttp.ClientSession() as session:
             last_height = await request_last_height(session)
+            big_batch = False
+            if (last_height - last_stored_height) > 1000:
+                big_batch = True
 
             if last_height > last_stored_height:
                 consensus_nodes = await request_consensus(session)
@@ -84,11 +94,18 @@ async def check_blocks():
                      'agents': consensus_nodes},
                      upsert=True)
 
-                for block_height in range(last_stored_height+1, last_height+1):
+                batch_blocks = dict()
+                batch_transactions = dict()
+
+                for i, block_height in enumerate(range(last_stored_height+1, last_height+1)):
                     try:
                         block = await request_block(session, height=block_height)
                         LOGGER.info("Synchronizing block #%d" % block['height'])
-                        await store_block(block)
+                        # if we are working on a big batch, don't save in db yet
+                        # add to a big dict instead
+                        await store_block(block, big_batch=big_batch,
+                                          batch_blocks=batch_blocks,
+                                          batch_transactions=batch_transactions)
                     except OverflowError:
                         LOGGER.error("Error storing block #%d" % block['height'])
                         LOGGER.info("Using upstream data for block #%d" % block['height'])
@@ -96,7 +113,19 @@ async def check_blocks():
                         await store_block(block)
                     last_stored_height = block['height']
 
-        await asyncio.sleep(8)
+                    #if i > 100000:
+                    #    break
+
+                if big_batch:
+                    await model.db.blocks.insert_many(
+                        sorted(batch_blocks.values(),
+                               key=operator.itemgetter('height')))
+                    await model.db.transactions.insert_many(
+                        sorted(batch_transactions.values(),
+                               key=operator.itemgetter('blockHeight')))
+        if not big_batch:
+            # we sleep only if we are not in the middle of a big batch
+            await asyncio.sleep(8)
 
 async def worker():
     while True:

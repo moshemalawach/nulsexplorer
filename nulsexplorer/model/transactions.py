@@ -53,7 +53,10 @@ class Transaction(BaseClass):
         if transaction['type'] == 6:
             join_tx_hash = transaction['info'].get('joinTxHash', None)
             if join_tx_hash is not None:
-                join_tx = await cls.collection.find_one(dict(hash=join_tx_hash))
+                if batch_mode and (join_tx_hash in batch_transactions):
+                    join_tx = batch_transactions[join_tx_hash]
+                else:
+                    join_tx = await cls.collection.find_one(dict(hash=join_tx_hash))
                 transaction['info']['address'] = join_tx['info']['address']
                 transaction['info']['agentHash'] = join_tx['info']['agentHash']
 
@@ -76,7 +79,8 @@ class Transaction(BaseClass):
                         ('outputs.%d.status' % fidx): 3,
                         ('outputs.%d.toHash' % fidx): transaction['hash'],
                         ('outputs.%d.toIndex' % fidx): i
-                    }})
+                    }},
+                    projection=['outputs'])
 
             if source_tx is not None:
                 in_from = source_tx['outputs'][inputdata['fromIndex']]

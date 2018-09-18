@@ -267,9 +267,7 @@ app.router.add_get('/addresses/page/{page}', address_list)
 app.router.add_get('/addresses/page/{page}.json', address_list)
 
 async def addresses_stats(request):
-    print(request.query)
     addresses = request.query.getall('addresses[]', [])
-    print(addresses)
     last_height = await get_last_block_height()
     unspent_info = {}
     if len(addresses):
@@ -289,6 +287,7 @@ async def view_address(request):
     address = request.match_info['address']
     mode = request.match_info.get('mode', 'summary')
     sort = [('time', -1)]
+    min_height = request.query.get('min_height', None)
 
     if mode not in ['summary', 'full-summary', 'detail']:
         raise web.HTTPNotFound(text="Display mode not found")
@@ -310,6 +309,11 @@ async def view_address(request):
             {'type': {'$ne': 1}},
             where_query
         ]}
+        #print(min_height)
+
+        if min_height is not None:
+            where_query['$and'].append({'blockHeight': {'$gt': int(min_height)}})
+
     tx_count = await Transaction.count(where_query)
 
     transactions = [tx async for tx in Transaction.collection.find(where_query,
@@ -414,6 +418,7 @@ async def address_consensus(request):
         info = tx.get('info', {})
         if tx['type'] == 4: # registering a consensus node
             position = {
+                'type': 'node',
                 'value': info.get('deposit', 0),
                 'agentHash': tx['hash'],
                 'hash': tx['hash'],
@@ -423,6 +428,7 @@ async def address_consensus(request):
 
         elif tx['type'] == 5: # join a consensus
             position = {
+                'type': 'stake',
                 'value': info.get('deposit', 0),
                 'agentHash': info.get('agentHash'),
                 'hash': tx['hash'],

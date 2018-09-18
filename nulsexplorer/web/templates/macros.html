@@ -101,9 +101,9 @@
   </td>
   <td>
     <span class="badge {% if transaction.display_type == 'IN' %}badge-success{% elif transaction.display_type == 'OUT' %}badge-warning{% else %}badge-primary{% endif %}">
-      {{transaction.display_type}}{% if transaction.get('info', {}).get('alias', None) %} {{transaction.info.alias}}{% endif %}
+      {{transaction.display_type}}{% if transaction.get('info', dict()).get('alias', None) %} {{transaction.info.alias}}{% endif %}
     </span>
-    {% if (transaction.get('info', {}).get('agentHash') or transaction.get('info', {}).get('createTxHash')) and not from_node %}
+    {% if (transaction.get('info', dict()).get('agentHash', None) or transaction.get('info', dict()).get('createTxHash', None)) and not from_node %}
       <a href="/consensus/node/{{transaction.info.agentHash or transaction.info.createTxHash}}">
          <span class="badge badge-secondary text-white">🏦</span>
        </a>
