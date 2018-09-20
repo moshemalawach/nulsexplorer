@@ -6,6 +6,7 @@ from nulsexplorer.protocol.data import (write_with_length, read_by_length,
 from nulsexplorer.protocol.register import register_tx_type, register_tx_processor
 from .base import BaseModuleData
 
+import struct
 import logging
 LOGGER = logging.getLogger('contract_module')
 
@@ -27,7 +28,7 @@ class CreateContractData(BaseModuleData):
 
         md['value'] = struct.unpack("q", buffer[cursor:cursor+8])[0]
         cursor += 8
-        md['codeLen'] = struct.unpack("I", buffer[cursor:cursor+8])[0]
+        md['codeLen'] = struct.unpack("I", buffer[cursor:cursor+4])[0]
         cursor += 4
         pos, md['code'] = read_by_length(buffer, cursor=cursor)
         cursor += pos
