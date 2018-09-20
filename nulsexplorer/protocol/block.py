@@ -31,7 +31,7 @@ class P2PKHScriptSig(BaseNulsData):
                + write_with_length(self.sign_bytes)
 
 class BlockHeader(BaseNulsData):
-    def __init__(self, data=None, has_stateroot=False):
+    def __init__(self, data=None):
         self.preHash = None
         self.merkleHash = None
         self.time = None
@@ -40,8 +40,6 @@ class BlockHeader(BaseNulsData):
         self.extend = None
         self.scriptSig = None
         self.raw_data = None
-        self.stateRoot = b""
-        self.has_stateroot = has_stateroot
 
         if data is not None:
             self.parse(data)
@@ -65,11 +63,6 @@ class BlockHeader(BaseNulsData):
         self.scriptSig = P2PKHScriptSig(data=buffer[cursor:])
         cursor += self.scriptSig.size
 
-        # WARNING: This will likely be removed.
-        if self.has_stateroot:
-            pos, self.stateRoot = read_by_length(buffer, cursor, check_size=True)
-            cursor += pos
-
         self.raw_data = buffer[:cursor]
         return cursor
 
@@ -82,10 +75,6 @@ class BlockHeader(BaseNulsData):
         out += write_with_length(self.extend)
         out += self._prepare(self.scriptSig)
 
-        # WARNING: This will likely be removed.
-        if self.has_stateroot:
-            out += write_with_length(self.stateRoot)
-
         return out
 
     def __str__(self):
@@ -95,22 +84,27 @@ class BlockHeader(BaseNulsData):
         )
 
 class Block(BaseNulsData):
-    def __init__(self, data=None, has_stateroot=False):
+    def __init__(self, data=None, hash_switch_height=None):
         self.header = None
         self.transactions = None
-        self.has_stateroot = has_stateroot
+        self.hash_switch_height = hash_switch_height
 
         #if data is not None:
         #    self.parse(data)
 
     async def parse(self, buffer):
         self.size = len(buffer)
-        self.header = BlockHeader(has_stateroot=self.has_stateroot)
+        self.header = BlockHeader()
         cursor = await self.header.parse(buffer)
+
+        hash_varint = ((self.hash_switch_height is None) or
+                       (0 <= self.header.height < int(self.hash_switch_height)))
+        print(hash_varint)
 
         self.transactions = list()
         for ntx in range(self.header.txCount):
-            tx = Transaction(height=self.header.height)
+            tx = Transaction(height=self.header.height,
+                             hash_varint=hash_varint)
             cursor = await tx.parse(buffer, cursor)
             self.transactions.append(tx)
 
@@ -129,7 +123,6 @@ class Block(BaseNulsData):
             'txCount': self.header.txCount,
             'extend': self.header.extend.hex(),
             'size': self.size,
-            'stateRoot': self.header.stateRoot.hex(),
             'reward': sum([t.coin_data.get_output_sum() for t in self.transactions if t.type == 1]),
             'fee': sum([t.coin_data.get_fee() for t in self.transactions if t.type != 1]),
             'txList': [await t.to_dict() for t in self.transactions]

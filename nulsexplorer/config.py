@@ -15,7 +15,7 @@ def get_defaults():
           'path': '/api/',
           'base_uri': 'http://127.0.0.1:8001/api/',
           'chain_id': 8964,
-          'has_stateroot': False
+          'hash_switch_height': None
         },
         'mongodb': {
           'uri': 'mongodb://127.0.0.1:27006',

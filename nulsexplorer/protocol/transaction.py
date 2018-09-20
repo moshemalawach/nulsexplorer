@@ -146,7 +146,7 @@ class CoinData(BaseNulsData):
         return output
 
 class Transaction(BaseNulsData):
-    def __init__(self, height=None):
+    def __init__(self, height=None, hash_varint=False):
         self.type = None
         self.time = None
         self.hash = None
@@ -154,6 +154,7 @@ class Transaction(BaseNulsData):
         self.scriptSig = None
         self.module_data = dict()
         self.coin_data = CoinData()
+        self.hash_varint = hash_varint
 
     async def _parse_data(self, buffer, cursor=0):
 
@@ -175,9 +176,14 @@ class Transaction(BaseNulsData):
         return output
 
     def get_hash(self):
-        values = bytes((self.type,)) \
-                + bytes((255,)) + writeUint64(self.time) \
-                + write_with_length(self.remark) \
+        if self.hash_varint:
+            values = bytes((self.type,)) \
+                    + bytes((255,)) + writeUint64(self.time)
+        else:
+            values = struct.pack("H", self.type) \
+                    + writeUint48(self.time)
+
+        values += write_with_length(self.remark) \
                 + self._write_data() \
                 + self.coin_data.serialize()
 
@@ -204,9 +210,14 @@ class Transaction(BaseNulsData):
         cursor = await self.coin_data.parse(buffer, cursor)
         med_cursor = cursor
 
-        values = bytes((self.type,)) \
-                + bytes((255,)) + writeUint64(self.time) \
-                + buffer[st2_cursor:med_cursor]
+        if self.hash_varint:
+            values = bytes((self.type,)) \
+                    + bytes((255,)) + writeUint64(self.time)
+        else:
+            values = struct.pack("H", self.type) \
+                    + writeUint48(self.time)
+
+        values += buffer[st2_cursor:med_cursor]
 
         self.hash_bytes = hash_twice(values)
         self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
