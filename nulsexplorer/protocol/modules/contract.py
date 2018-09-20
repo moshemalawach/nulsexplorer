@@ -1,7 +1,8 @@
 from nulsexplorer.protocol.data import (write_with_length, read_by_length,
                                         hash_from_address, address_from_hash,
                                         VarInt,
-                                        parse_varint, write_varint)
+                                        parse_varint, write_varint,
+                                        PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
 from nulsexplorer.protocol.register import register_tx_type, register_tx_processor
 from .base import BaseModuleData
 
