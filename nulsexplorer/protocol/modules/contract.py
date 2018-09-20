@@ -9,24 +9,33 @@ import logging
 LOGGER = logging.getLogger('contract_module')
 
 
+# Reference implementation:
+# https://github.com/nuls-io/nuls/blob/develop/contract-module/contract/src/main/java/io/nuls/contract/entity/txdata/CreateContractData.java
 class CreateContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
         md = dict()
-        pos, md['sender'] = read_by_length(buffer, cursor=cursor)
-        cursor += pos
+
+        md['sender'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
         md['sender'] = address_from_hash(md['sender'])
-        pos, md['contractAddress'] = read_by_length(buffer, cursor=cursor)
-        cursor += pos
+
+        md['contractAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
         md['contractAddress'] = address_from_hash(md['contractAddress'])
-        cursor, md['value'] = parse_varint(buffer, cursor)
-        cursor, md['codeLen'] = parse_varint(buffer, cursor)
+
+        md['value'] = struct.unpack("q", buffer[cursor:cursor+8])[0]
+        cursor += 8
+        md['codeLen'] = struct.unpack("I", buffer[cursor:cursor+8])[0]
+        cursor += 4
         pos, md['code'] = read_by_length(buffer, cursor=cursor)
         cursor += pos
         md['code'] = md['code'].hex()
 
-        cursor, md['gasLimit'] = parse_varint(buffer, cursor)
-        cursor, md['price'] = parse_varint(buffer, cursor)
+        md['gasLimit'] = struct.unpack("q", buffer[cursor:cursor+8])[0]
+        cursor += 8
+        md['price'] = struct.unpack("q", buffer[cursor:cursor+8])[0]
+        cursor += 8
         argslen = int(buffer[cursor])
         cursor += 1
         args = []
@@ -50,13 +59,13 @@ class CreateContractData(BaseModuleData):
 
     @classmethod
     async def to_buffer(cls, md):
-        output = write_with_length(hash_from_address(md['sender']))
-        output += write_with_length(hash_from_address(md['contractAddress']))
-        output += write_varint(md['value'])
-        output += write_varint(md['codeLen'])
+        output = hash_from_address(md['sender'])
+        output += hash_from_address(md['contractAddress'])
+        output += struct.pack("q", md['value'])
+        output += struct.pack("I", md['codeLen'])
         output += write_with_length(unhexlify(md['code']))
-        output += write_varint(md['gasLimit'])
-        output += write_varint(md['price'])
+        output += struct.pack("q", md['gasLimit'])
+        output += struct.pack("q", md['price'])
         output += bytes([len(md['args'])])
         for arg in md['args']:
             output += bytes([len(arg)])
@@ -74,15 +83,22 @@ class CallContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
         md = dict()
-        pos, md['sender'] = read_by_length(buffer, cursor=cursor)
-        cursor += pos
+
+        md['sender'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
         md['sender'] = address_from_hash(md['sender'])
-        pos, md['contractAddress'] = read_by_length(buffer, cursor=cursor)
-        cursor += pos
+
+        md['contractAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
         md['contractAddress'] = address_from_hash(md['contractAddress'])
-        cursor, md['value'] = parse_varint(buffer, cursor)
-        cursor, md['gasLimit'] = parse_varint(buffer, cursor)
-        cursor, md['price'] = parse_varint(buffer, cursor)
+
+        md['value'] = struct.unpack("q", buffer[cursor:cursor+8])[0]
+        cursor += 8
+        md['gasLimit'] = struct.unpack("q", buffer[cursor:cursor+8])[0]
+        cursor += 8
+        md['price'] = struct.unpack("q", buffer[cursor:cursor+8])[0]
+        cursor += 8
+
         pos, md['methodName'] = read_by_length(buffer, cursor=cursor)
         md['methodName'] = md['methodName'].decode('utf-8')
         cursor += pos
@@ -112,11 +128,11 @@ class CallContractData(BaseModuleData):
 
     @classmethod
     async def to_buffer(cls, md):
-        output = write_with_length(hash_from_address(md['sender']))
-        output += write_with_length(hash_from_address(md['contractAddress']))
-        output += write_varint(md['value'])
-        output += write_varint(md['gasLimit'])
-        output += write_varint(md['price'])
+        output = hash_from_address(md['sender'])
+        output += hash_from_address(md['contractAddress'])
+        output += struct.pack("q", md['value'])
+        output += struct.pack("q", md['gasLimit'])
+        output += struct.pack("q", md['price'])
         output += write_with_length(md['methodName'].encode('utf-8'))
         output += write_with_length(md['methodDesc'].encode('utf-8'))
         output += bytes([len(md['args'])])
@@ -136,18 +152,20 @@ class DeleteContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
         md = dict()
-        pos, md['sender'] = read_by_length(buffer, cursor=cursor)
-        cursor += pos
+
+        md['sender'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
         md['sender'] = address_from_hash(md['sender'])
-        pos, md['contractAddress'] = read_by_length(buffer, cursor=cursor)
-        cursor += pos
+
+        md['contractAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
         md['contractAddress'] = address_from_hash(md['contractAddress'])
         return cursor, md
 
     @classmethod
     async def to_buffer(cls, md):
-        output = write_with_length(hash_from_address(md['sender']))
-        output += write_with_length(hash_from_address(md['contractAddress']))
+        output = hash_from_address(md['sender'])
+        output += hash_from_address(md['contractAddress'])
         return output
 
 register_tx_type(102, DeleteContractData)
