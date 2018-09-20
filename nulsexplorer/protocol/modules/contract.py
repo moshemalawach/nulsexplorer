@@ -5,6 +5,10 @@ from nulsexplorer.protocol.data import (write_with_length, read_by_length,
 from nulsexplorer.protocol.register import register_tx_type, register_tx_processor
 from .base import BaseModuleData
 
+import logging
+LOGGER = logging.getLogger('contract_module')
+
+
 class CreateContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
@@ -33,7 +37,11 @@ class CreateContractData(BaseModuleData):
             for j in range(arglen):
                 pos, argcontent = read_by_length(buffer, cursor=cursor)
                 cursor += pos
-                arg.append(argcontent.decode('utf-8'))
+                try:
+                    argcontent = argcontent.decode('utf-8')
+                except UnicodeDecodeError:
+                    LOGGER.warning("Unicode decode error here, passing raw value.")
+                arg.append(argcontent)
 
             args.append(arg)
 
@@ -53,7 +61,11 @@ class CreateContractData(BaseModuleData):
         for arg in md['args']:
             output += bytes([len(arg)])
             for argitem in arg:
-                output += write_with_length(argitem.encode('utf-8'))
+                try:
+                    argitem = argitem.encode('utf-8')
+                except UnicodeEncodeError:
+                    LOGGER.warning("Unicode encode error here, passing raw value.")
+                output += write_with_length(argitem)
         return output
 
 register_tx_type(100, CreateContractData)
@@ -87,7 +99,11 @@ class CallContractData(BaseModuleData):
             for j in range(arglen):
                 pos, argcontent = read_by_length(buffer, cursor=cursor)
                 cursor += pos
-                arg.append(argcontent.decode('utf-8'))
+                try:
+                    argcontent = argcontent.decode('utf-8')
+                except UnicodeDecodeError:
+                    LOGGER.warning("Unicode decode error here, passing raw value.")
+                arg.append(argcontent)
 
             args.append(arg)
 
@@ -107,7 +123,11 @@ class CallContractData(BaseModuleData):
         for arg in md['args']:
             output += bytes([len(arg)])
             for argitem in arg:
-                output += write_with_length(arg.encode('utf-8'))
+                try:
+                    argitem = argitem.encode('utf-8')
+                except UnicodeEncodeError:
+                    LOGGER.warning("Unicode encode error here, passing raw value.")
+                output += write_with_length(argitem)
         return output
 
 register_tx_type(101, CallContractData)
