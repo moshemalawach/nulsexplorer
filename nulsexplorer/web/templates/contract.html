@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% from "macros.html" import transaction_detail with context %}
+{% from "macros.html" import transaction_summary with context %}
+{% from "macros.html" import paginate with context %}
+{% block title %}Contract detail {{address}}{% endblock %}
+{% block content %}
+<h2>Address detail</h2>
+<h3 class="text-truncate">{{address}}</h3>
+<div class="row">
+  <div class="col-sm">
+    <table class="table table-sm table-striped table-responsive-sm">
+      <tbody>
+        <tr>
+          <th scope="col" colspan="2">Summary</th>
+        </tr>
+        <tr>
+          <td>Hash</td>
+          <td class="text-right">{{address}}</td>
+        </tr>
+        <tr>
+          <td>TX count</td>
+          <td class="text-right">{{tx_count}}</td>
+        </tr>
+        <tr>
+          <td>Unspent TX</td>
+          <td class="text-right">{{unspent_info.unspent_count}}</td>
+        </tr>
+        <tr>
+          <td>Balance (including locked)</td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.get('unspent_value', 0)/100000000)}} <i class="nuls"></i></td>
+        </tr>
+        <tr>
+          <td>Locked balance</td>
+          <td class="text-right">{{"%0.4f" % ((unspent_info.get('time_locked_value', 0)+unspent_info.get('consensus_locked_value', 0))/100000000)}} <i class="nuls"></i></td>
+        </tr>
+        <tr>
+          <td>Time locked balance</td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.get('time_locked_value', 0)/100000000)}} <i class="nuls"></i></td>
+        </tr>
+        <tr>
+          <td>Consensus locked balance</td>
+          <td class="text-right">{{"%0.4f" % (unspent_info.get('consensus_locked_value', 0)/100000000)}} <i class="nuls"></i></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<h4>Transactions</h4>
+<ul class="nav nav-tabs mb-1">
+  <li class="nav-item">
+    <a class="nav-link{{(mode == 'summary') and ' active' or ''}}" href="/addresses/contracts/{{address}}">Calls summary</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{{(mode == 'transfers') and ' active' or ''}}" href="/addresses/contracts/{{address}}/transfers">Token transfers</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link{{(mode == 'detail') and ' active' or ''}}" href="/addresses/contracts/{{address}}/detail">Detail</a>
+  </li>
+</ul>
+{% if pagination.pages > 1 %}
+{{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse tabbed-pagination")}}
+{% endif %}
+{% if mode in ["summary", "full-summary"] %}
+<table class="table table-responsive-md">
+  <thead>
+    <tr>
+      <th scope="col">Tx Hash</th>
+      <th scope="col">Block</th>
+      <th scope="col">Date</th>
+      <th scope="col">From</th>
+      <th scope="col">To</th>
+      <th scope="col"></th>
+      <th scope="col">Value</th>
+      <th scope="col">Fee</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for transaction in transactions %}
+      {{ transaction_summary(transaction) }}
+    {% endfor %}
+  </tbody>
+</table>
+{% elif mode == "detail" %}
+  {% for transaction in transactions %}
+    {{ transaction_detail(transaction) }}
+  {% endfor %}
+{% endif %}
+{% if pagination.pages > 1 %}
+{{paginate(pagination, "/addresses/%s/%s/page/" % (address, mode), ulclass="pagination-sm", navclass="d-flex flex-row-reverse")}}
+{% endif %}
+{% endblock %}
