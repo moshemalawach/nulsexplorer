@@ -120,6 +120,9 @@ class Block(BaseNulsData):
         tx_count = len([tx for tx in self.transactions if tx.type != 103])
         await self.header.prepare_hash(tx_count=tx_count)
 
+        for transaction in self.transactions:
+            await transaction.run_processor()
+
     def __str__(self):
         return  "%s" % (
             self.header

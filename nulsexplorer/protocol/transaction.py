@@ -12,7 +12,7 @@ from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         address_from_hash,
                                         hash_from_address,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
-from nulsexplorer.protocol.register import TX_TYPES_REGISTER
+from nulsexplorer.protocol.register import TX_TYPES_REGISTER, TX_PROCESSOR_REGISTER
 
 class Coin(BaseNulsData):
     def __init__(self, data=None):
@@ -288,3 +288,7 @@ class Transaction(BaseNulsData):
         output += await self.coin_data.serialize()
         output += self.scriptSig is not None and write_with_length(self.scriptSig) or PLACE_HOLDER
         return output
+
+    async def run_processor(self):
+        if self.type in TX_PROCESSOR_REGISTER:
+            await TX_PROCESSOR_REGISTER[self.type](self)

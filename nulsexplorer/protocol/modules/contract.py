@@ -17,6 +17,7 @@ class CreateContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
         md = dict()
+        md['result'] = None # This should be populated elsewhere
 
         md['sender'] = buffer[cursor:cursor+ADDRESS_LENGTH]
         cursor += ADDRESS_LENGTH
@@ -85,6 +86,7 @@ class CallContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
         md = dict()
+        md['result'] = None # This should be populated elsewhere
 
         md['sender'] = buffer[cursor:cursor+ADDRESS_LENGTH]
         cursor += ADDRESS_LENGTH
@@ -154,6 +156,7 @@ class DeleteContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
         md = dict()
+        md['result'] = None # This should be populated elsewhere
 
         md['sender'] = buffer[cursor:cursor+ADDRESS_LENGTH]
         cursor += ADDRESS_LENGTH
@@ -203,6 +206,15 @@ async def process_contract_data(tx):
     # This function takes a tx dict and modifies it in place.
     # we assume we have access to a config since we are in a processor
     from nulsexplorer.main import api_request
+    async with aiohttp.ClientSession() as session:
+        LOGGER.info("Retrieving contract result for TX %s" % str(tx.hash))
+        result = await api_request('contract/result/%s' % str(tx.hash))
+        if result is None:
+            LOGGER.warning("Can't get contract info for TX %s" % str(tx.hash))
 
+        if result.get('flag', False):
+            tx.module_data['result'] = result['data']
+        else:
+            LOGGER.warning("Can't get contract info for TX %s" % str(tx.hash))
 
 register_tx_processor([100,101,102,103], process_contract_data)
