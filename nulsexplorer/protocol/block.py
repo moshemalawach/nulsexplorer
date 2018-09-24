@@ -44,6 +44,11 @@ class BlockHeader(BaseNulsData):
         if data is not None:
             self.parse(data)
 
+    async def prepare_hash(self, tx_count=None):
+        self.hash_bytes = hash_twice(await self.serialize(for_hash=True,
+                                                          tx_count=tx_count))
+        self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
+
     async def parse(self, buffer, cursor=0):
         self.preHash = NulsDigestData(data=buffer)
         cursor += self.preHash.size
@@ -56,9 +61,7 @@ class BlockHeader(BaseNulsData):
 
         pos, self.extend = read_by_length(buffer, cursor, check_size=True)
         cursor += pos
-
-        self.hash_bytes = hash_twice(await self.serialize())
-        self.hash = NulsDigestData(data=self.hash_bytes, alg_type=0)
+        #await self.prepare_hash()
 
         self.scriptSig = P2PKHScriptSig(data=buffer[cursor:])
         cursor += self.scriptSig.size
@@ -66,14 +69,20 @@ class BlockHeader(BaseNulsData):
         self.raw_data = buffer[:cursor]
         return cursor
 
-    async def serialize(self):
+    async def serialize(self, for_hash=False, tx_count=None):
+        if tx_count is None:
+            tx_count = self.txCount
+
         out = bytes()
         out += self._prepare(self.preHash)
         out += self._prepare(self.merkleHash)
         out += writeUint48(self.time)
-        out += struct.pack("II", self.height, self.txCount)
+        out += struct.pack("II", self.height, tx_count)
         out += write_with_length(self.extend)
-        out += self._prepare(self.scriptSig)
+        if for_hash:
+            out += self._prepare(None)
+        else:
+            out += self._prepare(self.scriptSig)
 
         return out
 
@@ -99,7 +108,6 @@ class Block(BaseNulsData):
 
         hash_varint = ((self.hash_switch_height is None) or
                        (0 <= self.header.height < int(self.hash_switch_height)))
-        print(hash_varint)
 
         self.transactions = list()
         for ntx in range(self.header.txCount):
@@ -107,6 +115,10 @@ class Block(BaseNulsData):
                              hash_varint=hash_varint)
             cursor = await tx.parse(buffer, cursor)
             self.transactions.append(tx)
+
+        # we need to rehash without the tx type 103, as they are virtual.
+        tx_count = len([tx for tx in self.transactions if tx.type != 103])
+        await self.header.prepare_hash(tx_count=tx_count)
 
     def __str__(self):
         return  "%s" % (
