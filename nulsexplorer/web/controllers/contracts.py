@@ -46,7 +46,7 @@ async def contracts_list(request):
 
     return cond_output(request, context, 'contracts.html')
 
-app.router.add_get('/contracts', contracts_list)
-app.router.add_get('/contracts.json', contracts_list)
-app.router.add_get('/contracts/page/{page}', contracts_list)
-app.router.add_get('/contracts/page/{page}.json', contracts_list)
+app.router.add_get('/addresses/contracts', contracts_list)
+app.router.add_get('/addresses/contracts.json', contracts_list)
+app.router.add_get('/addresses/contracts/page/{page}', contracts_list)
+app.router.add_get('/addresses/contracts/page/{page}.json', contracts_list)
