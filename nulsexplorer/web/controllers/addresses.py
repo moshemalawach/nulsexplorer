@@ -154,7 +154,7 @@ async def summarize_tx(tx, pov, node_mode=False):
         if tx['value'] > 0:
             if tx['type'] == 2:
                 tx['display_type'] = 'IN'
-            tx['source'] = inputs[0]['address']
+            tx['source'] = inputs[0].get('address')
             tx['target'] = pov
         elif tx['value'] < 1:
             if tx['type'] == 2:
