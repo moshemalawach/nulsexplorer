@@ -209,7 +209,7 @@ async def process_contract_data(tx):
     from nulsexplorer.main import api_request
     async with aiohttp.ClientSession() as session:
         LOGGER.info("Retrieving contract result for TX %s" % str(tx.hash))
-        result = await api_request('contract/result/%s' % str(tx.hash))
+        result = await api_request(session, 'contract/result/%s' % str(tx.hash))
         if result is None:
             LOGGER.warning("Can't get contract info for TX %s" % str(tx.hash))
 
