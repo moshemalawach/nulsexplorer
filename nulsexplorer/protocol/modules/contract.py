@@ -8,6 +8,7 @@ from .base import BaseModuleData
 
 import struct
 import logging
+import aiohttp # for now.
 LOGGER = logging.getLogger('contract_module')
 
 
