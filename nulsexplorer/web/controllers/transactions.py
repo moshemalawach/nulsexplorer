@@ -50,7 +50,7 @@ async def view_transaction_list(request):
         if tx_from is not None:
             filters.append({'inputs.address': tx_from})
 
-        tx_to = request.query.get('to', None)        
+        tx_to = request.query.get('to', None)
         if tx_to is not None:
             filters.append({'outputs.address': tx_to})
 
@@ -69,7 +69,7 @@ async def view_transaction_list(request):
     pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
 
     transactions = [tx._data async for tx
-                    in Transaction.find(find_filters, limit=pagination_per_page, skip=pagination_skip, sort=[('blockHeight', -1)])]
+                    in Transaction.collection.find(find_filters, limit=pagination_per_page, skip=pagination_skip, sort=[('blockHeight', -1)])]
 
     if mask_by_address is not None:
         for tx in transactions:
@@ -84,9 +84,9 @@ async def view_transaction_list(request):
     if pagination_per_page is not None:
         total_txs = await Transaction.count(find_filters)
 
-        pagination = Pagination(pagination_page, pagination_per_page, total_txs, 
+        pagination = Pagination(pagination_page, pagination_per_page, total_txs,
                                 url_base='/transactions/page/', query_string=query_string)
-                                
+
         context.update({
             'pagination': pagination,
             'pagination_page': pagination_page,
