@@ -176,14 +176,28 @@ class TransferContractData(BaseModuleData):
     @classmethod
     async def from_buffer(cls, buffer, cursor=0):
         md = dict()
+        md['originTxHash'] = buffer[cursor:cursor+HASH_LENGTH].hex()
+        cursor += HASH_LENGTH
+
+        md['contractAddress'] = buffer[cursor:cursor+ADDRESS_LENGTH]
+        cursor += ADDRESS_LENGTH
+        md['contractAddress'] = address_from_hash(md['contractAddress'])
+
+        md['success'] = int(buffer[cursor])
+        cursor += 1
+
         return cursor, md
 
     @classmethod
     async def to_buffer(cls, md):
+        output = unhexlify(md['originTxHash'])
+        output += hash_from_address(md['contractAddress'])
+        output += bytes([len(md['success'])])
+
         return output
 
-#register_tx_type(103, TransferContractData)
-# not implemented for now...
+register_tx_type(103, TransferContractData)
+
 
 async def process_contract_data(tx):
     # This function takes a tx dict and modifies it in place.
