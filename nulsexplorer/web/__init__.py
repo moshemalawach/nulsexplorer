@@ -13,6 +13,7 @@ import pkg_resources
 import time
 import json
 from bson import json_util
+import pprint
 
 import configparser
 from datetime import date, datetime, timedelta
@@ -49,7 +50,8 @@ env.globals.update({
     'int': int,
     'float': float,
     'len': len,
-    'TRANSACTION_TYPES': TRANSACTION_TYPES
+    'TRANSACTION_TYPES': TRANSACTION_TYPES,
+    'pprint': pprint
 })
 
 #bottle.TEMPLATE_PATH.insert(0,tpl_path)
