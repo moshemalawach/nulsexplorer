@@ -20,16 +20,26 @@ async def contracts_list(request):
     from nulsexplorer.model import db
     last_height = await get_last_block_height()
     page = int(request.match_info.get('page', '1'))
+    only_tokens = bool(int(request.query.get('tokens', 0)))
 
     contracts_query = {
         'type': 100,
         'info.result.success': True
     }
+    sort = [('blockHeight', -1)]
+
+    if (only_tokens):
+        sort = [('info.result.symbol', 1)]
+        contracts_query.update({
+            'info.result.name': {'$ne': None},
+            'info.result.symbol': {'$ne': None}
+        })
+
     total_contracts = await Transaction.collection.count(contracts_query)
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_contracts)
 
     contract_creations = Transaction.collection.find(contracts_query,
-                                                     sort=[('blockHeight', -1)],
+                                                     sort=sort,
                                                      skip=(page-1)*PER_PAGE_SUMMARY,
                                                      limit=PER_PAGE_SUMMARY)
 
@@ -39,6 +49,7 @@ async def contracts_list(request):
     context = {'contract_creations': contract_creations,
                'pagination': pagination,
                'last_height': last_height,
+               'only_tokens': only_tokens,
                'pagination_page': page,
                'pagination_total': total_contracts,
                'pagination_per_page': PER_PAGE_SUMMARY,
