@@ -3,7 +3,7 @@ from nulsexplorer.protocol.data import (write_with_length, read_by_length,
                                         VarInt,
                                         parse_varint, write_varint,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
-from nulsexplorer.protocol.register import register_tx_type, register_tx_processor
+from nulsexplorer.modules.register import register_tx_type, register_tx_processor
 from .base import BaseModuleData
 
 import struct
@@ -218,4 +218,4 @@ async def process_contract_data(tx):
         else:
             LOGGER.warning("Can't get contract info for TX %s" % str(tx.hash))
 
-register_tx_processor([100,101,102,103], process_contract_data)
+register_tx_processor(process_contract_data, tx_types=[100,101,102,103], step="pre")

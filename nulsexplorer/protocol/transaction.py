@@ -12,7 +12,7 @@ from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         address_from_hash,
                                         hash_from_address,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
-from nulsexplorer.protocol.register import TX_TYPES_REGISTER, TX_PROCESSOR_REGISTER
+from nulsexplorer.modules.register import TX_TYPES_REGISTER, process_tx
 
 class Coin(BaseNulsData):
     def __init__(self, data=None):
@@ -290,5 +290,4 @@ class Transaction(BaseNulsData):
         return output
 
     async def run_processor(self):
-        if self.type in TX_PROCESSOR_REGISTER:
-            await TX_PROCESSOR_REGISTER[self.type](self)
+        return await process_tx(self, step="pre")

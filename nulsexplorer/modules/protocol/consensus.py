@@ -6,7 +6,7 @@ from nulsexplorer.protocol.data import (write_with_length, read_by_length,
                                         address_from_hash,
                                         hash_from_address,
                                         PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
-from nulsexplorer.protocol.register import register_tx_type
+from nulsexplorer.modules.register import register_tx_type
 from .base import BaseModuleData
 from binascii import hexlify, unhexlify
 import struct
