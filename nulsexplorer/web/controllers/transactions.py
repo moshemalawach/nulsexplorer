@@ -71,9 +71,14 @@ async def view_transaction_list(request):
         find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
 
     pagination_page, pagination_per_page, pagination_skip = Pagination.get_pagination_params(request)
+    if pagination_per_page is None:
+        pagination_per_page = -1
+    if pagination_skip is None:
+        pagination_skip = 0
 
     transactions = [tx async for tx
-                    in Transaction.collection.find(find_filters, limit=pagination_per_page, skip=pagination_skip, sort=[('blockHeight', -1)])]
+                    in Transaction.collection.find(find_filters, limit=pagination_per_page,
+                    skip=pagination_skip, sort=[('blockHeight', -1)])]
 
     if mask_by_address is not None:
         for tx in transactions:
