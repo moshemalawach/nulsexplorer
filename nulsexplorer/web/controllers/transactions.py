@@ -1,9 +1,13 @@
+import time
 import aiohttp_jinja2
+from aiohttp import web
+from aiocache import cached, SimpleMemoryCache
+
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (get_last_block_height, find_block)
 from .utils import Pagination, PER_PAGE, cond_output, prepare_date_filters, prepare_block_height_filters
-from aiohttp import web
+
 
 #@aiohttp_jinja2.template('transaction.html')
 async def view_transaction(request):
@@ -99,3 +103,63 @@ async def view_transaction_list(request):
 
 app.router.add_get('/transactions.json', view_transaction_list)
 app.router.add_get('/transactions/page/{page}.json', view_transaction_list)
+
+@cached(ttl=60*15, cache=SimpleMemoryCache, timeout=120) # 15 minutes ttl
+async def get_history(period, min_time=None):
+    if min_time is None:
+        # if we don't have a min time, assume 30 days.
+        min_time = (int(time.time())-(60*60*24*30))*1000
+
+    stages = [
+        {'$sort': {'time': -1}},
+        {'$match': {
+            'time': {'$gt': min_time}
+        }}
+    ]
+
+
+    dateformat = None
+    if period == "day":
+        dateformat = "%Y-%m-%d"
+    elif period == "hour":
+        dateformat = "%Y-%m-%dT%H:00:00"
+    elif period == "minute":
+        dateformat = "%Y-%m-%dT%H:%M:00"
+    else:
+        raise NotImplementedError("Period type not implemented")
+
+    stages.append({
+        '$addFields': {
+           'totalInputs': { '$sum': "$inputs.value" } ,
+           'totalOutputs': { '$sum': "$outputs.value" }
+        }
+    })
+
+    stages.append(
+        { "$group": {
+            "_id": {
+                "$dateToString": {
+                    "format": dateformat,
+                    "date": {
+                        "$toDate": '$time'
+                    }
+                }
+            },
+            "count": { "$sum": 1 },
+            "output_value": { "$sum": "$totalOutputs" },
+            "input_value": { "$sum": "$totalInputs" }
+        } }
+    )
+    stages.append({'$sort': {'_id': 1}})
+    result = Transaction.collection.aggregate(stages)
+    return [stat async for stat in result]
+
+async def histo(request):
+    period = request.match_info['period']
+    history = await get_history(period)
+
+    context = {
+        'stats': history
+    }
+    return cond_output(request, context, 'TODO.html')
+app.router.add_get('/transactions/stats/{period}.json', histo)
