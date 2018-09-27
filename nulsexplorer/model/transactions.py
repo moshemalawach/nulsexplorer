@@ -25,6 +25,8 @@ class Transaction(BaseClass):
                Index("outputs.lockTime"),
                Index("info.createTxHash"),
                Index("info.agentHash"),
+               Index("info.contractAddress"),
+               Index("info.result.success"),
                Index([("time", pymongo.DESCENDING),
                       ("type", pymongo.ASCENDING)]),
                Index([("outputs.status", pymongo.ASCENDING),
