@@ -115,6 +115,7 @@ async def view_contract(request):
 
     return cond_output(request, context, 'contract.html')
 
+app.router.add_get('/addresses/contracts/{address}.json', view_contract)
 app.router.add_get('/addresses/contracts/{address}', view_contract)
 app.router.add_get('/addresses/contracts/{address}/{mode}.json', view_contract)
 app.router.add_get('/addresses/contracts/{address}/{mode}', view_contract)
