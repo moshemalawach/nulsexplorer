@@ -41,6 +41,17 @@ class BlockHeader(BaseNulsData):
         self.scriptSig = None
         self.raw_data = None
 
+        # extend data
+        self.roundIndex = None
+        self.consensusMemberCount = None
+        self.roundStartTime = None
+        self.packingIndexOfRound = None
+        self.mainVersion = None
+        self.currentVersion = None
+        self.percent = None
+        self.delay = None
+        self.stateRoot = None
+
         if data is not None:
             self.parse(data)
 
@@ -62,12 +73,35 @@ class BlockHeader(BaseNulsData):
         pos, self.extend = read_by_length(buffer, cursor, check_size=True)
         cursor += pos
         #await self.prepare_hash()
+        await self.parse_extend(self.extend)
 
         self.scriptSig = P2PKHScriptSig(data=buffer[cursor:])
         cursor += self.scriptSig.size
 
         self.raw_data = buffer[:cursor]
         return cursor
+
+    async def parse_extend(self, extend):
+        cursor = 0
+        self.roundIndex = struct.unpack("I", extend[cursor:cursor+4])[0]
+        cursor += 4
+        self.consensusMemberCount = struct.unpack("H", extend[cursor:cursor+2])[0]
+        cursor += 2
+        self.roundStartTime = readUint48(extend, cursor)
+        cursor += 6
+        self.packingIndexOfRound = struct.unpack("H", extend[cursor:cursor+2])[0]
+        cursor += 2
+        if len(extend) > cursor:
+            self.mainVersion = struct.unpack("i", extend[cursor:cursor+4])[0]
+            cursor += 4
+            self.currentVersion = struct.unpack("i", extend[cursor:cursor+4])[0]
+            cursor += 4
+            self.percent = struct.unpack("H", extend[cursor:cursor+2])[0]
+            cursor += 2
+            self.delay = struct.unpack("I", extend[cursor:cursor+4])[0]
+            cursor += 4
+            pos, self.stateRoot = read_by_length(extend, cursor, check_size=True)
+            cursor += pos
 
     async def serialize(self, for_hash=False, tx_count=None):
         if tx_count is None:
@@ -106,8 +140,10 @@ class Block(BaseNulsData):
         self.header = BlockHeader()
         cursor = await self.header.parse(buffer)
 
-        hash_varint = ((self.hash_switch_height is None) or
-                       (0 <= self.header.height < int(self.hash_switch_height)))
+        #hash_varint = ((self.hash_switch_height is None) or
+        #               (0 <= self.header.height < int(self.hash_switch_height)))
+        #print(self.header.mainVersion, self.header.currentVersion)
+        hash_varint = (self.header.currentVersion is None) or (self.header.currentVersion < 2)
 
         self.transactions = list()
         for ntx in range(self.header.txCount):
@@ -137,6 +173,15 @@ class Block(BaseNulsData):
             'height': self.header.height,
             'txCount': self.header.txCount,
             'extend': self.header.extend.hex(),
+            'roundIndex': self.header.roundIndex,
+            'consensusMemberCount': self.header.consensusMemberCount,
+            'roundStartTime': self.header.roundStartTime,
+            'packingIndexOfRound': self.header.packingIndexOfRound,
+            'mainVersion': self.header.mainVersion,
+            'currentVersion': self.header.currentVersion,
+            'percent': self.header.percent,
+            'delay': self.header.delay,
+            'stateRoot': self.header.stateRoot,
             'size': self.size,
             'reward': sum([t.coin_data.get_output_sum() for t in self.transactions if t.type == 1]),
             'fee': sum([t.coin_data.get_fee() for t in self.transactions if t.type != 1]),
