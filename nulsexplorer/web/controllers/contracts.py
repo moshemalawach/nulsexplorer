@@ -85,17 +85,19 @@ async def view_contract(request):
                      {'outputs.address': address},
                      {'inputs.address': address}]}
     tx_count = await Transaction.count(where_query)
-    transactions = [tx async for tx in
-                    Transaction.collection.find(where_query,
-                                                sort=[('time', -1)],
-                                                limit=per_page,
-                                                skip=(page-1)*per_page)]
+    transactions = []
+    if (mode in ['summary', 'calls-summary']):
+        transactions = [tx async for tx in
+                        Transaction.collection.find(where_query,
+                                                    sort=[('time', -1)],
+                                                    limit=per_page,
+                                                    skip=(page-1)*per_page)]
+
+        transactions = [await summarize_tx(tx, address) for tx in transactions]
 
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
                     ).get(address, {})
-
-    transactions = [await summarize_tx(tx, address) for tx in transactions]
 
     pagination = Pagination(page, per_page, tx_count)
 
