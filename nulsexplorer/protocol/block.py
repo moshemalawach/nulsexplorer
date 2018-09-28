@@ -143,7 +143,7 @@ class Block(BaseNulsData):
         #hash_varint = ((self.hash_switch_height is None) or
         #               (0 <= self.header.height < int(self.hash_switch_height)))
         #print(self.header.mainVersion, self.header.currentVersion)
-        hash_varint = (self.header.currentVersion is None) or (self.header.currentVersion < 2)
+        hash_varint = (self.header.mainVersion is None) or (self.header.mainVersion < 2)
 
         self.transactions = list()
         for ntx in range(self.header.txCount):
