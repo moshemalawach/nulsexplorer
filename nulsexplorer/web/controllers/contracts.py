@@ -84,33 +84,65 @@ async def view_contract(request):
                     [{'info.contractAddress': address},
                      {'outputs.address': address},
                      {'inputs.address': address}]}
-    tx_count = await Transaction.count(where_query)
     transactions = []
+    pagination_count = 0
+    holders = []
     if (mode in ['summary', 'calls-summary']):
+        if mode == "calls-summary":
+            where_query['type'] = 101
         transactions = [tx async for tx in
                         Transaction.collection.find(where_query,
                                                     sort=[('time', -1)],
                                                     limit=per_page,
                                                     skip=(page-1)*per_page)]
+        pagination_count = await Transaction.count(where_query)
 
         transactions = [await summarize_tx(tx, address) for tx in transactions]
+
+    if mode == "holders":
+        holders = Transaction.collection.aggregate([
+            {'$match': {
+                'info.contractAddress': address,
+                'info.result.tokenTransfers': { '$exists': True, '$ne': [] }
+            }},
+            {'$unwind': '$info.result.tokenTransfers'},
+            {'$addFields': {
+             'transfers': {'$concatArrays': [
+                [['$info.result.tokenTransfers.from', {"$multiply" : [-1, {'$toDouble': "$info.result.tokenTransfers.value"}]}]],
+                [['$info.result.tokenTransfers.to', {'$toDouble': "$info.result.tokenTransfers.value"}]],
+                ]}
+             }},
+            {'$unwind': '$transfers'},
+            {'$project': {
+                'transfers': 1
+            } },
+            #{ "$group" : { "_id" : "$transfers.0", "balance" : { "$sum" : "$transfers.1" } } }
+            { "$group" : {
+             "_id" : {'$arrayElemAt': ["$transfers", 0]},
+             "balance" : { "$sum" : {'$arrayElemAt': ["$transfers", 1]} }
+             }
+            }
+        ])
+        holders = [b async for b in holders]
+        print(holders)
 
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
                     ).get(address, {})
 
-    pagination = Pagination(page, per_page, tx_count)
+    pagination = Pagination(page, per_page, pagination_count)
 
 
     context = {'address': address,
                'create_tx': create_tx,
                'transactions': transactions,
+               'holders': holders,
                'pagination': pagination,
                'last_height': last_height,
-               'tx_count': tx_count,
+               'pagination_count': pagination_count,
                'mode': mode,
                'pagination_page': page,
-               'pagination_total': tx_count,
+               'pagination_total': pagination_count,
                'pagination_per_page': per_page,
                'pagination_item': 'transactions',
                'unspent_info': unspent_info}
