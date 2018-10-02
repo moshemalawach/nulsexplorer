@@ -24,5 +24,9 @@ def get_defaults():
         'mail': {
             'email_sender': 'nuls@localhost.localdomain',
             'smtp_url': 'smtp://localhost'
+        },
+        'ipfs': {
+            'host': '127.0.0.1',
+            'port': 5001
         }
     }
