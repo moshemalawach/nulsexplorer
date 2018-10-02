@@ -204,7 +204,7 @@ register_tx_type(103, TransferContractData)
 
 
 async def process_contract_data(tx):
-    # This function takes a tx dict and modifies it in place.
+    # This function takes a tx object and modifies it in place.
     # we assume we have access to a config since we are in a processor
     from nulsexplorer.main import api_request
     async with aiohttp.ClientSession() as session:

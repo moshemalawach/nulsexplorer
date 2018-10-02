@@ -27,6 +27,8 @@ class Transaction(BaseClass):
                Index("info.agentHash"),
                Index("info.contractAddress"),
                Index("info.result.success"),
+               Index("info.aggregate.key"),
+               Index("info.post.type"),
                Index([("time", pymongo.DESCENDING),
                       ("type", pymongo.ASCENDING)]),
                Index([("outputs.status", pymongo.ASCENDING),
