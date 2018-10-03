@@ -28,6 +28,7 @@ class Transaction(BaseClass):
                Index("info.contractAddress"),
                Index("info.result.success"),
                Index("info.aggregate.key"),
+               Index("info.type"),
                Index("info.post.type"),
                Index([("time", pymongo.DESCENDING),
                       ("type", pymongo.ASCENDING)]),
