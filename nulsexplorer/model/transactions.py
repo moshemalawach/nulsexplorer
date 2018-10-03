@@ -15,14 +15,14 @@ class Transaction(BaseClass):
     COLLECTION = "transactions"
 
     INDEXES = [Index("hash", unique=True),
-               Index("blockHeight", pymongo.ASCENDING),
-               Index("blockHeight", pymongo.DESCENDING),
-               Index("time", pymongo.DESCENDING),
+               Index([("blockHeight", pymongo.ASCENDING)]),
+               Index([("blockHeight", pymongo.DESCENDING)]),
+               Index([("time", pymongo.DESCENDING)]),
                Index("type"),
                Index("outputs.address"),
                Index("inputs.address"),
-               Index("outputs.status"),
-               Index("outputs.lockTime"),
+               #Index("outputs.status"),
+               #Index("outputs.lockTime"),
                Index("info.createTxHash"),
                Index("info.agentHash"),
                Index("info.contractAddress"),
@@ -32,8 +32,8 @@ class Transaction(BaseClass):
                Index("info.post.type"),
                Index([("time", pymongo.DESCENDING),
                       ("type", pymongo.ASCENDING)]),
-               Index([("outputs.status", pymongo.ASCENDING),
-                      ("outputs.lockTime", pymongo.ASCENDING)]),
+               #Index([("outputs.status", pymongo.ASCENDING),
+               #       ("outputs.lockTime", pymongo.ASCENDING)]),
                Index([("outputs.status", pymongo.DESCENDING),
                       ("outputs.lockTime", pymongo.ASCENDING)]),]
 
