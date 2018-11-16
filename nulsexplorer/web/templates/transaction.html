@@ -46,7 +46,7 @@
     <table class="table table-sm table-striped">
       <tbody>
         <tr>
-          <th scope="col" colspan="2">Hashes</th>
+          <th scope="col" colspan="2">Relations</th>
         </tr>
         <tr>
           <td>Transaction hash</td>
@@ -66,6 +66,16 @@
             {{block.merkleHash}}
           </td>
         </tr>
+        {% if transaction.get('info', {}).get('contractAddress') %}
+        <tr>
+          <td>Contract</td>
+          <td class="text-right">
+            <a href="/addresses/contracts/{{transaction.info.contractAddress}}">
+              {{transaction.info.contractAddress}}
+            </a>
+          </td>
+        </tr>
+        {% endif %}
       </tbody>
     </table>
   </div>
