@@ -12,6 +12,11 @@
            <span class="badge badge-secondary text-white">Consensus Node 🏦</span>
          </a>
       {% endif %}
+      {% if transaction.get('info', {}).contractAddress %}
+        <a href="/addresses/contracts/{{transaction.info.contractAddress}}">
+           <span class="badge badge-secondary text-white">Contract <i class="fe fe-cpu"></i></span>
+         </a>
+      {% endif %}
     </div>
     <div class="text-right">
       {{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}
@@ -101,11 +106,18 @@
   </td>
   <td>
     <span class="badge {% if transaction.display_type == 'IN' %}badge-success{% elif transaction.display_type == 'OUT' %}badge-warning{% else %}badge-primary{% endif %}">
-      {{transaction.display_type}}{% if transaction.get('info', dict()).get('alias', None) %} {{transaction.info.alias}}{% endif %}
+      {{transaction.display_type}}
+      {% if transaction.get('info', dict()).get('alias', None) %}{{transaction.info.alias}}{% endif %}
+      {% if transaction.get('info', dict()).get('methodName', None) %}{{transaction.info.methodName}}{% endif %}
     </span>
     {% if (transaction.get('info', dict()).get('agentHash', None) or transaction.get('info', dict()).get('createTxHash', None)) and not from_node %}
       <a href="/consensus/node/{{transaction.info.agentHash or transaction.info.createTxHash}}">
          <span class="badge badge-secondary text-white">🏦</span>
+       </a>
+    {% endif %}
+    {% if transaction.get('info', {}).contractAddress %}
+      <a href="/addresses/contracts/{{transaction.info.contractAddress}}">
+         <span class="badge badge-secondary text-white"><i class="fe fe-cpu"></i></span>
        </a>
     {% endif %}
     {% if (transaction.remark) %}
