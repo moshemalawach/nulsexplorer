@@ -215,6 +215,20 @@ async def process_contract_data(tx):
 
         if result.get('flag', False):
             tx.module_data['result'] = result['data']
+
+            if tx.type == 100: # contract creation
+                contract_address = tx.module_data['result'].get('contractAddress')
+                if contract_address is not None:
+                    LOGGER.info("Retrieving contract details for %s" % contract_address)
+                    result = await api_request(session, 'contract/info/%s' % contract_address)
+                    if result is None:
+                        LOGGER.warning("Can't get contract details for %s" % contract_address)
+                    else:
+                        print(repr(result))
+                        tx.module_data['details'] = result
+
+                else:
+                    LOGGER.warning("Can't get contract details for %s" % contract_address)
         else:
             LOGGER.warning("Can't get contract info for TX %s" % str(tx.hash))
 
