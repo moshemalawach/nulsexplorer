@@ -1,7 +1,9 @@
+from aiohttp import web, ClientSession
 
 from nulsexplorer.web import app
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.blocks import (get_last_block_height)
+from nulsexplorer.main import api_request, api_post
 
 from .utils import (Pagination, PER_PAGE, PER_PAGE_SUMMARY,
                     cond_output)
@@ -124,7 +126,6 @@ async def view_contract(request):
             }
         ])
         holders = [b async for b in holders]
-        print(holders)
 
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
@@ -148,6 +149,28 @@ async def view_contract(request):
                'unspent_info': unspent_info}
 
     return cond_output(request, context, 'contract.html')
+
+async def contract_methods(request):
+    address = request.match_info['address']
+    last_height = await get_last_block_height()
+    async with ClientSession() as session:
+        result = await api_request(session, 'contract/info/%s' % address)
+        
+    context = {'address': address,
+               'methods': result['method']}
+
+    return cond_output(request, context, 'api.html')
+
+
+app.router.add_get('/addresses/contracts/{address}/methods.json', contract_methods)
+
+async def contract_call(request):
+    address = request.match_info['address']
+    context = {}
+
+    return cond_output(request, context, 'api.html')
+
+app.router.add_get('/addresses/contracts/{address}/call.json', contract_call)
 
 app.router.add_get('/addresses/contracts/{address}.json', view_contract)
 app.router.add_get('/addresses/contracts/{address}', view_contract)
