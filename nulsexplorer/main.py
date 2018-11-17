@@ -3,12 +3,14 @@ import aiohttp
 import logging
 import base64
 import operator
+
+from aiohttp import web, ClientSession
+
 from nulsexplorer.web import app
 from nulsexplorer import model
 from nulsexplorer.model.blocks import get_last_block_height, store_block
 from nulsexplorer.model.transactions import Transaction
 from nulsexplorer.model.consensus import Consensus
-
 from nulsexplorer.protocol.block import Block
 
 LOGGER = logging.getLogger('connector')
