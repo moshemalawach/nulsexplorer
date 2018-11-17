@@ -155,7 +155,7 @@ async def contract_methods(request):
     last_height = await get_last_block_height()
     async with ClientSession() as session:
         result = await api_request(session, 'contract/info/%s' % address)
-        
+
     context = {'address': address,
                'methods': result['method']}
 
@@ -165,12 +165,16 @@ async def contract_methods(request):
 app.router.add_get('/addresses/contracts/{address}/methods.json', contract_methods)
 
 async def contract_call(request):
-    address = request.match_info['address']
-    context = {}
+    data = await request.json()
 
-    return cond_output(request, context, 'api.html')
+    async with ClientSession() as session:
+        output = await api_post(session,
+                                'contract/view',
+                                data)
 
-app.router.add_get('/addresses/contracts/{address}/call.json', contract_call)
+    return web.json_response(output)
+
+app.router.add_get('/addresses/contracts/call', contract_call)
 
 app.router.add_get('/addresses/contracts/{address}.json', view_contract)
 app.router.add_get('/addresses/contracts/{address}', view_contract)
