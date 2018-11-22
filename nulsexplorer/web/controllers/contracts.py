@@ -174,7 +174,7 @@ async def contract_call(request):
 
     return web.json_response(output)
 
-app.router.add_get('/addresses/contracts/call', contract_call)
+app.router.add_post('/addresses/contracts/call', contract_call)
 
 app.router.add_get('/addresses/contracts/{address}.json', view_contract)
 app.router.add_get('/addresses/contracts/{address}', view_contract)
