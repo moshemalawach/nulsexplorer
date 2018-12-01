@@ -302,7 +302,7 @@ async def view_address(request):
     page = int(request.match_info.get('page', '1'))
     where_query = {'$or':
                     [{'outputs.address': address},
-                     {'inputs.address': address}]}
+                     {'inputs.0.address': address}]}
 
     if mode == "summary":
         where_query = {'$and': [
@@ -404,7 +404,7 @@ async def address_consensus(request):
 
     where_query = {'$or':
                     [{'outputs.address': address},
-                     {'inputs.address': address}]}
+                     {'inputs.0.address': address}]}
     where_query = {'$and': [
         {'type': {'$gt': 3}}, # consensus actions
         {'type': {'$lt': 10}}, # in the future, there will be more actions, ignore them.
