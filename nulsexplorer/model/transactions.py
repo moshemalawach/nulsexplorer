@@ -38,7 +38,8 @@ class Transaction(BaseClass):
                Index([("outputs.status", pymongo.DESCENDING),
                       ("outputs.lockTime", pymongo.ASCENDING)]),
                Index([("type", pymongo.ASCENDING),
-                      ("inputs.0.address", pymongo.ASCENDING),
+                      ("inputs.0.address", pymongo.ASCENDING)]),
+               Index([("type", pymongo.ASCENDING),
                       ("outputs.address", pymongo.ASCENDING)])]
 
     @classmethod
