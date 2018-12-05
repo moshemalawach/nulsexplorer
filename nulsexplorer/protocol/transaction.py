@@ -17,6 +17,7 @@ from nulsexplorer.modules.register import TX_TYPES_REGISTER, process_tx
 class Coin(BaseNulsData):
     def __init__(self, data=None):
         self.address = None
+        self.rawScript = None
         self.fromHash = None
         self.fromIndex = None
         self.na = None
@@ -28,7 +29,7 @@ class Coin(BaseNulsData):
     def parse(self, buffer, cursor=0):
         pos, owner = read_by_length(buffer, cursor)
         cursor += pos
-        if len(owner) > ADDRESS_LENGTH:
+        if len(owner) == (HASH_LENGTH+1):
             val = (len(owner) - HASH_LENGTH)
             if (val > 1):
                 fc = VarInt()
@@ -38,8 +39,14 @@ class Coin(BaseNulsData):
             else:
                 self.fromIndex = owner[-1]
             self.fromHash = owner[:HASH_LENGTH]
-        else:
+        elif len(owner) == ADDRESS_LENGTH:
             self.address = owner
+        else:
+            # ok, we have some script here
+            self.rawScript = owner
+            # tentative fix for now... Ugly.
+            self.address = owner[2:ADDRESS_LENGTH+2] # it's either 2 or 3.
+            # print(address_from_hash(owner[3:ADDRESS_LENGTH+3]))
 
         self.na = struct.unpack("Q", buffer[cursor:cursor+8])[0]
         cursor += 8
@@ -52,6 +59,9 @@ class Coin(BaseNulsData):
             'value': self.na,
             'lockTime': self.lockTime
         }
+        if self.rawScript is not None:
+            val['owner'] = self.rawScript.hex()
+
         if self.address is not None:
             val['address'] = address_from_hash(self.address)
             val['addressHash'] = self.address
@@ -65,6 +75,7 @@ class Coin(BaseNulsData):
     @classmethod
     def from_dict(cls, value):
         item = cls()
+        item.rawScript = value.get('owner', None)
         item.address = value.get('address', None)
         item.fromHash = value.get('fromHash', None)
         if item.fromHash is not None:
@@ -80,7 +91,9 @@ class Coin(BaseNulsData):
 
     def serialize(self):
         output = b""
-        if self.fromHash is not None:
+        if self.rawScript is not None:
+            output += write_with_length(self.rawScript)
+        elif self.fromHash is not None:
             output += write_with_length(self.fromHash + bytes([self.fromIndex]))
         elif self.address is not None:
             output += write_with_length(self.address)
