@@ -246,7 +246,22 @@ async def address_list(request):
     ##addresses = await addresses_unspent_txs(await cache_last_block_height())
     total_addresses = await db.cached_unspent.count()
     page = int(request.match_info.get('page', '1'))
-    addresses = db.cached_unspent.find(skip=(page-1)*PER_PAGE_SUMMARY, limit=PER_PAGE_SUMMARY)
+    address_list = request.query.getall('addresses[]', [])
+
+    per_page = PER_PAGE_SUMMARY
+    sort = [('unspent_value', -1)]
+
+    if request.rel_url.path.endswith('/all.json'):
+        per_page = 10000
+        sort = [('-id', 1)]
+
+    if len(address_list):
+        addresses = db.cached_unspent.find(
+            {'_id': {'$in': address_list}},
+            skip=(page-1)*per_page, limit=per_page, sort=sort)
+    else:
+        addresses = db.cached_unspent.find(skip=(page-1)*per_page,
+                                           limit=per_page, sort=sort)
     addresses = [addr async for addr in addresses]
 
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_addresses)
@@ -256,13 +271,14 @@ async def address_list(request):
               'last_height': last_height,
               'pagination_page': page,
               'pagination_total': total_addresses,
-              'pagination_per_page': PER_PAGE_SUMMARY,
+              'pagination_per_page': per_page,
               'pagination_item': 'addresses'}
 
     return cond_output(request, context, 'addresses.html')
 
 app.router.add_get('/addresses', address_list)
 app.router.add_get('/addresses.json', address_list)
+app.router.add_get('/addresses/all.json', address_list)
 app.router.add_get('/addresses/page/{page}', address_list)
 app.router.add_get('/addresses/page/{page}.json', address_list)
 
