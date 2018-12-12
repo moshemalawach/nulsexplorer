@@ -46,7 +46,10 @@ async def addresses_unspent_txs(last_block_height, check_time=None, address_list
         }]
 
     aggregate = Transaction.collection.aggregate(
-        matches + [{'$unwind': '$outputs'}] + matches + [
+        matches +
+        [{'$project': {
+            'outputs': 1
+        }}] + [{'$unwind': '$outputs'}] + matches + [
         {'$group': {'_id': '$outputs.address',
                     'unspent_count': {'$sum': 1},
                     'unspent_value': {'$sum': '$outputs.value'},
