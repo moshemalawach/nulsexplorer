@@ -321,7 +321,7 @@ async def view_address(request):
     page = int(request.match_info.get('page', '1'))
     where_query = {'$or':
                     [{'outputs.address': address},
-                     {'inputs.0.address': address}]}
+                     {'inputs.address': address}]}
 
     if mode == "summary":
         where_query = {'$and': [
