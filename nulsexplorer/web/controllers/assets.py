@@ -1,4 +1,4 @@
-from nulsexplorer import app
+from nulsexplorer.web import app
 from aiohttp import web
 
 async def get_global_stats():
