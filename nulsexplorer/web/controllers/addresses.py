@@ -208,7 +208,15 @@ async def get_aliases():
                      'address': {'$last': {'$arrayElemAt': ['$inputs.address', 0]}},
                      'time': {'$last': '$time'},
                      'blockHeight': {'$last': '$blockHeight'}}},
-         {'$sort': {'_id': 1}}])
+         {'$sort': {'_id': 1}},
+         {'$addFields': {'alias': '$_id'}},
+         {'$project': {
+            '_id': 0,
+            'alias': 1,
+            'address': 1 ,
+            'time': 1,
+            'blockHeight': 1}}
+        ])
     return [item async for item in aggregate]
 
 #@aiohttp_jinja2.template('aliases.html')
@@ -219,7 +227,12 @@ async def aliases(request):
     aliases = await get_aliases()
     total_aliases = len(aliases)
     page = int(request.match_info.get('page', '1'))
-    aliases = aliases[(page-1)*PER_PAGE_SUMMARY:((page-1)*PER_PAGE_SUMMARY)+PER_PAGE_SUMMARY]
+
+    per_page = PER_PAGE_SUMMARY
+    if request.rel_url.path.endswith('/all.json'):
+        per_page = 10000
+
+    aliases = aliases[(page-1)*per_page:((page-1)*per_page)+per_page]
 
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_aliases)
 
@@ -234,6 +247,7 @@ async def aliases(request):
     return cond_output(request, context, 'aliases.html')
 
 app.router.add_get('/addresses/aliases.json', aliases)
+app.router.add_get('/addresses/aliases/all.json', aliases)
 app.router.add_get('/addresses/aliases', aliases)
 app.router.add_get('/addresses/aliases/page/{page}.json', aliases)
 app.router.add_get('/addresses/aliases/page/{page}', aliases)
