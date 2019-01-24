@@ -114,11 +114,15 @@ async def get_history(period, min_time=None):
     if min_time is None:
         # if we don't have a min time, assume 30 days.
         min_time = (int(time.time())-(60*60*24*30))*1000
+    max_time = int(time.time())*1000
 
     stages = [
         {'$sort': {'time': -1}},
         {'$match': {
             'time': {'$gt': min_time}
+        }},
+        {'$match': {
+            'time': {'$lt': max_time}
         }}
     ]
 

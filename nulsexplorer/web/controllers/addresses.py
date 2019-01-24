@@ -258,12 +258,10 @@ async def address_list(request):
     """
 
     from nulsexplorer.model import db
-
     last_height = await get_last_block_height()
     ##addresses = await addresses_unspent_txs(await cache_last_block_height())
     total_addresses = await db.cached_unspent.count()
-    page = int(request.match_info.get('page', '1'))
-    address_list = request.query.getall('addresses[]', [])
+
 
     per_page = PER_PAGE_SUMMARY
     sort = [('unspent_value', -1)]
@@ -271,6 +269,12 @@ async def address_list(request):
     if request.rel_url.path.endswith('/all.json'):
         per_page = 10000
         sort = [('-id', 1)]
+        data = await request.json()
+        address_list = data.get('addresses', [])
+        page = data.get('page', 1)
+    else:
+        address_list = request.query.getall('addresses[]', [])
+        page = int(request.match_info.get('page', '1'))
 
     if len(address_list):
         addresses = db.cached_unspent.find(
@@ -295,7 +299,7 @@ async def address_list(request):
 
 app.router.add_get('/addresses', address_list)
 app.router.add_get('/addresses.json', address_list)
-app.router.add_get('/addresses/all.json', address_list)
+app.router.add_post('/addresses/all.json', address_list)
 app.router.add_get('/addresses/page/{page}', address_list)
 app.router.add_get('/addresses/page/{page}.json', address_list)
 
@@ -335,7 +339,7 @@ async def view_address(request):
     page = int(request.match_info.get('page', '1'))
     where_query = {'$or':
                     [{'outputs.address': address},
-                     {'inputs.0.address': address}]}
+                     {'inputs.address': address}]}
 
     if mode == "summary":
         where_query = {'$and': [
