@@ -17,6 +17,7 @@ class Pagination(object):
     @staticmethod
     def get_pagination_params(request):
         pagination_page = int(request.match_info.get('page', '1'))
+        pagination_page = int(request.query.get('page', pagination_page))
         pagination_param = int(request.query.get('pagination', PER_PAGE))
         with_pagination = pagination_param is not 0
 
