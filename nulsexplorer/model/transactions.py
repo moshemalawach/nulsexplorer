@@ -1,7 +1,4 @@
-""" Transactions are derived from Blocks txList.
-
-To recreate (raw mongo, should be adapted for motor):
-db.blocks.aggregate([ {$unwind: "$txList"}, {$replaceRoot: { newRoot: "$txList" }}, {$out: "transactions"}])
+""" Transactions are generated from the block content.
 """
 
 import pymongo
