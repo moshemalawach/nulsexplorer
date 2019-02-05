@@ -50,20 +50,22 @@ async def process_transfer_ipfs_remark(tx):
             'type': 'ipfs',
             'success': False
         }
-        try:
-            if parts[1] == b"A":
-                # Ok, we have an aggregate.
-                # Maybe check object size to avoid ddos attack ?
-                info['aggregate'] = await get_json(parts[2])
-            elif parts[1] == b"P":
-                info['post'] = await get_json(parts[2])
-            else:
-                info['extended'] = await get_json(parts[1])
+        
+        if app['config'].ipfs.enabled.value:
+            try:
+                if parts[1] == b"A":
+                    # Ok, we have an aggregate.
+                    # Maybe check object size to avoid ddos attack ?
+                    info['aggregate'] = await get_json(parts[2])
+                elif parts[1] == b"P":
+                    info['post'] = await get_json(parts[2])
+                else:
+                    info['extended'] = await get_json(parts[1])
 
-            info['success'] = True
-        except Exception as e:
-            LOGGER.warning("Can't retrieve the ipfs hash %s" % parts[1])
-            LOGGER.exception(e)
+                info['success'] = True
+            except Exception as e:
+                LOGGER.warning("Can't retrieve the ipfs hash %s" % parts[1])
+                LOGGER.exception(e)
 
         tx.module_data.update(info)
 
