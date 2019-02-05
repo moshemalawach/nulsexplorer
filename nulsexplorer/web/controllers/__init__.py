@@ -1,4 +1,4 @@
 from nulsexplorer.web.controllers import (main, blocks, transactions,
-                                          contracts,
+                                          contracts, ipfs,
                                           addresses, search, consensus,
                                           assets)

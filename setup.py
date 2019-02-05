@@ -28,7 +28,8 @@ setup(name='nulsexplorer',
           "aiocache",
           "aiocron",
           "pyyaml",
-          "configmanager"#,
+          "configmanager",
+          "ipfsapi"#,
           #"secp256k1"
       ],
       entry_points={

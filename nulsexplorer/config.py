@@ -26,6 +26,7 @@ def get_defaults():
             'smtp_url': 'smtp://localhost'
         },
         'ipfs': {
+            'enabled': True,
             'host': '127.0.0.1',
             'port': 5001
         }
