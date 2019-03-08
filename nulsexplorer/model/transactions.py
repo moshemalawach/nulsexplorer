@@ -3,6 +3,7 @@
 
 import pymongo
 from nulsexplorer.model.base import BaseClass, Index
+from pymongo import UpdateOne
 
 import logging
 import operator
@@ -57,6 +58,7 @@ class Transaction(BaseClass):
                            batch_transactions=None):
         #await cls.collection.insert(tx_data)
         transaction = tx_data
+        collec = cls.collection
 
         if transaction['type'] == 6:
             join_tx_hash = transaction['info'].get('joinTxHash', None)
@@ -64,10 +66,12 @@ class Transaction(BaseClass):
                 if batch_mode and (join_tx_hash in batch_transactions):
                     join_tx = batch_transactions[join_tx_hash]
                 else:
-                    join_tx = await cls.collection.find_one(dict(hash=join_tx_hash))
+                    join_tx = await collec.find_one(dict(hash=join_tx_hash))
                 transaction['info']['address'] = join_tx['info']['address']
                 transaction['info']['agentHash'] = join_tx['info']['agentHash']
 
+
+        bulk_updates = []
         for i, inputdata in enumerate(transaction['inputs']):
             fhash = inputdata['fromHash']
             fidx = inputdata['fromIndex']
@@ -81,14 +85,16 @@ class Transaction(BaseClass):
                     source_output['toIndex'] = i
 
             if source_tx is None:
-                source_tx = await cls.collection.find_one_and_update(
+                source_tx = await collec.find_one(
                     dict(hash=fhash),
-                    {'$set': {
-                        ('outputs.%d.status' % fidx): 3,
-                        ('outputs.%d.toHash' % fidx): transaction['hash'],
-                        ('outputs.%d.toIndex' % fidx): i
-                    }},
                     projection=['outputs'])
+                bulk_updates.append(
+                    UpdateOne(dict(hash=fhash),
+                              {'$set': {
+                                    ('outputs.%d.status' % fidx): 3,
+                                    ('outputs.%d.toHash' % fidx): transaction['hash'],
+                                    ('outputs.%d.toIndex' % fidx): i
+                              }}))
 
             if source_tx is not None:
                 in_from = source_tx['outputs'][inputdata['fromIndex']]
@@ -97,6 +103,10 @@ class Transaction(BaseClass):
             #     in_from['toHash'] = transaction.hash
             #     in_from['toIndex'] = i
             #     await source_tx.save()
+
+        if len(bulk_updates):
+            result = await collec.bulk_write(bulk_updates)
+            LOGGER.debug("Bulk write: %r" % result)
 
         for outputdata in transaction['outputs']:
             if 'status' not in outputdata:
@@ -111,6 +121,6 @@ class Transaction(BaseClass):
             return transaction
         else:
             try:
-                await cls.collection.insert_one(tx_data)
+                await collec.insert_one(tx_data)
             except pymongo.errors.DuplicateKeyError:
                 LOGGER.warning("Transaction %s was already there" % transaction['hash'])
