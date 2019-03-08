@@ -44,13 +44,14 @@ async def add_json(value):
 async def process_transfer_ipfs_remark(tx):
     # This function takes a tx dict and modifies it in place.
     # we assume we have access to a config since we are in a processor
+    from nulsexplorer.web import app
     if tx.remark.startswith(b'IPFS;'):
         parts = tx.remark.split(b';')
         info = {
             'type': 'ipfs',
             'success': False
         }
-        
+
         if app['config'].ipfs.enabled.value:
             try:
                 if parts[1] == b"A":
