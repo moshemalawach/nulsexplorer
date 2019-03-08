@@ -72,6 +72,17 @@ class Transaction(BaseClass):
 
 
         bulk_updates = []
+        if len(transaction['inputs']):
+            LOGGER.info("Handling inputs")
+
+            source_txs = {}
+            ihashes = [idata['fromHash'] for idata in transaction['inputs']]
+            itxs = collec.find({'hash': {'$in': ihashes}},
+                                    projection=['hash', 'outputs'])
+            async for itx in itxs:
+                source_txs[itx['hash']] = itx
+
+
         for i, inputdata in enumerate(transaction['inputs']):
             fhash = inputdata['fromHash']
             fidx = inputdata['fromIndex']
@@ -85,9 +96,12 @@ class Transaction(BaseClass):
                     source_output['toIndex'] = i
 
             if source_tx is None:
-                source_tx = await collec.find_one(
-                    dict(hash=fhash),
-                    projection=['outputs'])
+                # source_tx = await collec.find_one(
+                #     dict(hash=fhash),
+                #     projection=['outputs'])
+                source_tx = source_txs.get(fhash, None)
+                if source_tx is None:
+                    LOGGER.warning("Source tx not found %s" % fhash)
                 bulk_updates.append(
                     UpdateOne(dict(hash=fhash),
                               {'$set': {
@@ -105,8 +119,8 @@ class Transaction(BaseClass):
             #     await source_tx.save()
 
         if len(bulk_updates):
-            result = await collec.bulk_write(bulk_updates)
-            LOGGER.debug("Bulk write: %r" % result)
+            result = await collec.bulk_write(bulk_updates, ordered=False)
+            LOGGER.debug("Bulk write")
 
         for outputdata in transaction['outputs']:
             if 'status' not in outputdata:
