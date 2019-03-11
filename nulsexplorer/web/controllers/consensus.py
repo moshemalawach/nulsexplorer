@@ -21,20 +21,20 @@ async def cache_last_block_height():
 async def get_packer_stats(last_height):
     packed_block_query = {'$group' : { '_id' : '$packingAddress', 'count' : {'$sum' : 1}}}
 
-    totals = Block.collection.aggregate([packed_block_query])
-    totals_all = {r['_id']: r['count'] async for r in totals}
-    totals = Block.collection.aggregate([
-        {'$match': {'height': {'$gt': last_height-360}}},
-        packed_block_query
-    ])
-    totals_hour = {r['_id']: r['count'] async for r in totals}
+    # totals = Block.collection.aggregate([packed_block_query])
+    # totals_all = {r['_id']: r['count'] async for r in totals}
+    # totals = Block.collection.aggregate([
+    #     {'$match': {'height': {'$gt': last_height-360}}},
+    #     packed_block_query
+    # ])
+    # totals_hour = {r['_id']: r['count'] async for r in totals}
     totals = Block.collection.aggregate([
         {'$match': {'height': {'$gt': last_height-8640}}},
         packed_block_query
     ])
     totals_day = {r['_id']: r['count'] async for r in totals}
 
-    return (totals_all, totals_hour, totals_day)
+    return totals_day
 
 @cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
 async def get_consensus_stats(last_height, periods=96, hash=None):
@@ -95,7 +95,8 @@ async def view_consensus(request):
     node_count = len(consensus['agents'])
     total_deposit = sum([a['totalDeposit'] + a['deposit'] for a in consensus['agents']])
     active_count = len([a for a in consensus['agents'] if a['status'] == 1])
-    totals_all, totals_hour, totals_day = await get_packer_stats(height)
+    #totals_all, totals_hour, totals_day = await get_packer_stats(height)
+    totals_day = await get_packer_stats(height)
 
     stats = await get_consensus_stats(await cache_last_block_height())
 
@@ -105,8 +106,8 @@ async def view_consensus(request):
     context = {'consensus': consensus,
             'height': height,
             'last_height': last_height,
-            'total_all': totals_all,
-            'total_hour': totals_hour,
+            # 'total_all': totals_all,
+            # 'total_hour': totals_hour,
             'total_day': totals_day,
             'node_count': node_count,
             'active_count': active_count,
@@ -180,7 +181,7 @@ async def view_consensus_list(request):
     if len(filters) > 0:
         find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
 
-    consensus_model_list = [cons._data async for cons in Consensus.find(find_filters,
+    consensus_model_list = [cons async for cons in Consensus.collection.find(find_filters,
                             limit=pagination_per_page, skip=pagination_skip, sort=[('height', -1)])]
 
     consensus_list = []
