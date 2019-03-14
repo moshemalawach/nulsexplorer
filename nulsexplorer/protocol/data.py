@@ -14,6 +14,7 @@ ADDRESS_LENGTH = 23
 HASH_LENGTH = 34
 
 B58_DIGITS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
+MESSAGE_TEMPLATE = "\x18NULS Signed Data:\n{}"
 
 def getxor(body):
     xor = 0
@@ -123,6 +124,16 @@ class NulsSignature(BaseNulsData):
         item.sig_ser = privkey.ecdsa_serialize(sig_check)
         return item
 
+    @classmethod
+    def sign_message(cls, pri_key, message):
+        privkey = PrivateKey(pri_key, raw=True) # we expect to have a private key as bytes. unhexlify it before passing.
+        item = cls()
+        item.pub_key = privkey.pubkey.serialize()
+        item.digest_bytes = digest_bytes
+        sig_check = privkey.ecdsa_sign(MESSAGE_TEMPLATE.format(message))
+        item.sig_ser = privkey.ecdsa_serialize(sig_check)
+        return item
+
     def serialize(self, with_length=False):
         output = b''
         output += write_with_length(self.pub_key)
@@ -132,6 +143,14 @@ class NulsSignature(BaseNulsData):
             return write_with_length(output)
         else:
             return output
+
+    def verify(message):
+        try:
+            sig_raw = pub.ecdsa_deserialize(self.sig_ser)
+            good = pub.ecdsa_verify(MESSAGE_TEMPLATE.format(message), sig_raw)
+        except:
+            good = False
+        return good
 
 
 class NulsDigestData(BaseNulsData):
@@ -335,3 +354,41 @@ class VarInt:
             return bytes((254, )) + writeUint32(self.value)
         else:
             return bytes((255, )) + writeUint64(self.value)
+
+def sign_message(pri_key, message):
+    privkey = PrivateKey(pri_key, raw=True) # we expect to have a private key as bytes. unhexlify it before passing.
+
+    sig_check = privkey.ecdsa_sign(MESSAGE_TEMPLATE.format(message))
+    sig_ser, recid = privkey.ecdsa_recoverable_serialize(sig_check)
+
+    return (sig_ser, recid)
+
+def sign_recoverable_message(pri_key, message):
+    privkey = PrivateKey(pri_key, raw=True) # we expect to have a private key as bytes. unhexlify it before passing.
+
+    sig_check = privkey.ecdsa_sign_recoverable(MESSAGE_TEMPLATE.format(message))
+    sig_ser, recid = privkey.ecdsa_recoverable_serialize(sig_check)
+
+    return (sig_ser, recid)
+
+def verify_recoverable_message(signature, message, recid):
+    """ Verifies a signature of a hash and returns the address that signed it.
+    If no address is returned, signature is bad.
+    """
+    empty = PublicKey(flags=ALL_FLAGS)
+    sig = empty.ecdsa_recoverable_deserialize(signature, args.recid)
+    msg = MESSAGE_TEMPLATE.format(message)
+    pubkey = empty.ecdsa_recover(msg, sig)
+    addr_hash = public_key_to_hash(pubkey.serialize())
+    address = address_from_hash(address)
+
+    try:
+        sig_raw = pub.ecdsa_deserialize(signature)
+        good = pub.ecdsa_verify(message, sig_raw)
+    except:
+        good = False
+
+    if good:
+        return address
+    else:
+        return None
