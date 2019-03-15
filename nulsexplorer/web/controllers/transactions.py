@@ -67,6 +67,13 @@ async def view_transaction_list(request):
     if block_height_filters is not None:
         filters.append(block_height_filters)
 
+    if request.query.get('business_ipfs', None):
+        # to get all busines data or ipfs related data
+        filters.append({'$or': [
+            {'info.type': 'ipfs'},
+            {'type': 10}
+        ]})
+
     if len(filters) > 0:
         find_filters = {'$and': filters} if len(filters) > 1 else filters[0]
 
@@ -76,9 +83,11 @@ async def view_transaction_list(request):
     if pagination_skip is None:
         pagination_skip = 0
 
+    sort = [('blockHeight', int(request.query.get('sort_order', '-1')))]
+
     transactions = [tx async for tx
                     in Transaction.collection.find(find_filters, limit=pagination_per_page,
-                    skip=pagination_skip, sort=[('blockHeight', -1)])]
+                    skip=pagination_skip, sort=sort)]
 
     if mask_by_address is not None:
         for tx in transactions:
