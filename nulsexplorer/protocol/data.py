@@ -111,8 +111,14 @@ class NulsSignature(BaseNulsData):
         if data is not None:
             self.parse(data)
 
-    def parse(self):
-        raise NotImplementedError("Not yet implemented.")
+    def parse(self, buffer, cursor=0):
+        pos, self.pub_key = read_by_length(buffer, cursor)
+        cursor += pos
+        self.ecc_type = buffer[cursor]
+        cursor += 1
+        pos, self.sig_ser = read_by_length(buffer, cursor)
+        cursor += pos
+        return cursor
 
     @classmethod
     def sign_data(cls, pri_key, digest_bytes):
