@@ -192,7 +192,7 @@ class Transaction(BaseNulsData):
 
         return output
 
-    def get_hash(self):
+    async def get_hash(self):
         if self.hash_varint:
             values = bytes((self.type,)) \
                     + bytes((255,)) + writeUint64(self.time)
@@ -200,9 +200,9 @@ class Transaction(BaseNulsData):
             values = struct.pack("H", self.type) \
                     + writeUint48(self.time)
 
-        values += write_with_length(self.remark) \
-                + self._write_data() \
-                + self.coin_data.serialize()
+        values += (write_with_length(self.remark)
+                   + (await self._write_data())
+                   + (await self.coin_data.serialize()))
 
         hash_bytes = hash_twice(values)
         hash = NulsDigestData(data=hash_bytes, alg_type=0)
@@ -292,8 +292,8 @@ class Transaction(BaseNulsData):
         return item
 
     async def sign_tx(self, pri_key):
-        self.signature = NulsSignature.sign_data(pri_key,
-                                                 self.get_hash().digest_bytes)
+        self.signature = NulsSignature.sign_data(
+            pri_key, (await self.get_hash()).digest_bytes)
         self.scriptSig = self.signature.serialize()
 
     async def serialize(self):
