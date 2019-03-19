@@ -394,7 +394,14 @@ async def address_available_outputs(request):
     address = request.match_info['address']
     all_txs = Transaction.collection.find(
             {'outputs.status': {'$lt': 3},
-             'outputs.address': address})
+             'outputs.address': address},
+            projection={
+                'outputs.status': 1,
+                'outputs.value': 1,
+                'outputs.lockTime': 1,
+                'outputs.address': 1,
+                'hash': 1
+            })
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
                     ).get(address, {})
