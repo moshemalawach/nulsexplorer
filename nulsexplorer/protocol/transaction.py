@@ -1,5 +1,6 @@
 import struct
 import base64
+import math
 from binascii import hexlify, unhexlify
 from datetime import datetime
 from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
@@ -11,7 +12,9 @@ from nulsexplorer.protocol.data import (BaseNulsData, NulsDigestData,
                                         timestamp_from_time,
                                         address_from_hash,
                                         hash_from_address,
-                                        PLACE_HOLDER, ADDRESS_LENGTH, HASH_LENGTH)
+                                        PLACE_HOLDER, ADDRESS_LENGTH,
+                                        HASH_LENGTH, COIN_UNIT,
+                                        CHEAP_UNIT_FEE, UNIT_FEE, KB)
 from nulsexplorer.modules.register import TX_TYPES_REGISTER, process_tx
 
 class Coin(BaseNulsData):
@@ -142,7 +145,8 @@ class CoinData(BaseNulsData):
         return cursor
 
     def get_fee(self):
-        return sum([i.na for i in self.inputs]) - sum([o.na for o in self.outputs])
+        return (sum([i.na for i in self.inputs])
+                - sum([o.na for o in self.outputs]))
 
     def get_output_sum(self):
         return sum([o.na for o in self.outputs])
@@ -304,3 +308,19 @@ class Transaction(BaseNulsData):
 
     async def run_processor(self):
         return await process_tx(self, step="pre")
+
+    async def calculate_fee(self):
+        size = len(await self.serialize())
+        unit_fee = UNIT_FEE
+        if self.type in [2, 10, 101]:
+            unit_fee = CHEAP_UNIT_FEE
+
+        fee = unit_fee * math.floor(size / KB)  # per kb
+
+        if size % KB > 0:
+            # why is it needed, to be sure we have at least the fee ?
+            # or am I doing a bad port from java, where they work with int
+            # and not mutable ?
+            fee += unit_fee
+
+        return fee

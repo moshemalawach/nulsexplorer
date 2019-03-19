@@ -16,6 +16,11 @@ HASH_LENGTH = 34
 B58_DIGITS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 MESSAGE_TEMPLATE = "\x18NULS Signed Data:\n{}"
 
+COIN_UNIT = 100000000
+CHEAP_UNIT_FEE = 100000
+UNIT_FEE = 1000000
+KB = 1024
+
 def getxor(body):
     xor = 0
     for c in body:
