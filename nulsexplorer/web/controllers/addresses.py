@@ -1,4 +1,3 @@
-import aiohttp_jinja2
 from aiohttp import web
 from collections import defaultdict
 from nulsexplorer import TRANSACTION_TYPES
@@ -17,14 +16,18 @@ from aiocache import cached, SimpleMemoryCache
 import logging
 LOGGER = logging.getLogger(__name__)
 
+
 @cached(ttl=60*120, cache=SimpleMemoryCache)
 async def cache_last_block_height():
     return await get_last_block_height()
 
-# WARNING: we are storing this in memory... memcached or similar would be better
-#          if volume starts to be too big.
-@cached(ttl=60*120, cache=SimpleMemoryCache, timeout=120) # 60*120 seconds or 2 hours minutes, 120 seconds timeout
-async def addresses_unspent_txs(last_block_height, check_time=None, address_list=None, output_collection=None):
+
+# WARNING: we are storing this in memory... memcached or similar would
+#          be better if volume starts to be too big.
+@cached(ttl=60*120, cache=SimpleMemoryCache, timeout=120)
+# 60*120 seconds or 2 hours minutes, 120 seconds timeout
+async def addresses_unspent_txs(last_block_height, check_time=None,
+                                address_list=None, output_collection=None):
     if check_time is None:
         check_time = datetime.datetime.now()
 
@@ -115,12 +118,14 @@ async def addresses_unspent_txs(last_block_height, check_time=None, address_list
     items = [item async for item in aggregate]
     return items
 
-@cached(ttl=60*10, cache=SimpleMemoryCache) # 600 seconds or 10 minutes
+
+@cached(ttl=60*10, cache=SimpleMemoryCache)  # 600 seconds or 10 minutes
 async def addresses_unspent_info(last_block_height, address_list=None):
     unspent_info = await addresses_unspent_txs(last_block_height,
                                                address_list=address_list)
     return {info['_id']: info
             for info in unspent_info}
+
 
 async def summarize_tx(tx, pov, node_mode=False):
     """ Summarizes a TX, trying to understand the context.
@@ -183,7 +188,6 @@ async def summarize_tx(tx, pov, node_mode=False):
                 tx['value'] = o['value']
                 break
 
-
     elif tx['type'] in [6, 9]:
         addr = inputs[0]['address']
         if tx['info'].get('address'):
@@ -205,7 +209,8 @@ async def get_aliases():
     aggregate = Transaction.collection.aggregate([
          {'$match': {'type': 3}},
          {'$group': {'_id': '$info.alias',
-                     'address': {'$last': {'$arrayElemAt': ['$inputs.address', 0]}},
+                     'address': {'$last': {'$arrayElemAt':
+                                           ['$inputs.address', 0]}},
                      'time': {'$last': '$time'},
                      'blockHeight': {'$last': '$blockHeight'}}},
          {'$sort': {'_id': 1}},
@@ -213,13 +218,13 @@ async def get_aliases():
          {'$project': {
             '_id': 0,
             'alias': 1,
-            'address': 1 ,
+            'address': 1,
             'time': 1,
             'blockHeight': 1}}
         ])
     return [item async for item in aggregate]
 
-#@aiohttp_jinja2.template('aliases.html')
+
 async def aliases(request):
     """ Addresses view
     """
@@ -236,13 +241,13 @@ async def aliases(request):
 
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_aliases)
 
-    context =  {'aliases': aliases,
-            'pagination': pagination,
-            'last_height': last_height,
-            'pagination_page': page,
-            'pagination_total': total_aliases,
-            'pagination_per_page': PER_PAGE_SUMMARY,
-            'pagination_item': 'aliases'}
+    context = {'aliases': aliases,
+               'pagination': pagination,
+               'last_height': last_height,
+               'pagination_page': page,
+               'pagination_total': total_aliases,
+               'pagination_per_page': PER_PAGE_SUMMARY,
+               'pagination_item': 'aliases'}
 
     return cond_output(request, context, 'aliases.html')
 
@@ -252,16 +257,14 @@ app.router.add_get('/addresses/aliases', aliases)
 app.router.add_get('/addresses/aliases/page/{page}.json', aliases)
 app.router.add_get('/addresses/aliases/page/{page}', aliases)
 
-#@aiohttp_jinja2.template('addresses.html')
+
 async def address_list(request):
     """ Addresses view
     """
 
     from nulsexplorer.model import db
     last_height = await get_last_block_height()
-    ##addresses = await addresses_unspent_txs(await cache_last_block_height())
     total_addresses = await db.cached_unspent.count()
-
 
     per_page = PER_PAGE_SUMMARY
     sort = [('unspent_value', -1)]
@@ -288,12 +291,12 @@ async def address_list(request):
     pagination = Pagination(page, PER_PAGE_SUMMARY, total_addresses)
 
     context = {'addresses': addresses,
-              'pagination': pagination,
-              'last_height': last_height,
-              'pagination_page': page,
-              'pagination_total': total_addresses,
-              'pagination_per_page': per_page,
-              'pagination_item': 'addresses'}
+               'pagination': pagination,
+               'last_height': last_height,
+               'pagination_page': page,
+               'pagination_total': total_addresses,
+               'pagination_per_page': per_page,
+               'pagination_item': 'addresses'}
 
     return cond_output(request, context, 'addresses.html')
 
@@ -302,6 +305,7 @@ app.router.add_get('/addresses.json', address_list)
 app.router.add_post('/addresses/all.json', address_list)
 app.router.add_get('/addresses/page/{page}', address_list)
 app.router.add_get('/addresses/page/{page}.json', address_list)
+
 
 async def addresses_stats(request):
     addresses = request.query.getall('addresses[]', [])
@@ -312,11 +316,13 @@ async def addresses_stats(request):
                                                     address_list=addresses)
     context = {'unspent_info': unspent_info,
                'last_height': last_height}
-    return web.json_response(context, dumps=lambda v: json.dumps(v,
-                                                     default=json_util.default))
+    return web.json_response(context,
+                             dumps=lambda v: json.dumps(
+                                 v, default=json_util.default))
 app.router.add_get('/addresses/stats', addresses_stats)
 
-#@aiohttp_jinja2.template('address.html')
+
+# @aiohttp_jinja2.template('address.html')
 async def view_address(request):
     """ Address view
     """
@@ -338,30 +344,29 @@ async def view_address(request):
 
     page = int(request.match_info.get('page', '1'))
     where_query = {'$or':
-                    [{'outputs.address': address},
-                     {'inputs.address': address}]}
+                   [{'outputs.address': address},
+                    {'inputs.address': address}]}
 
     if mode == "summary":
         where_query = {'$and': [
             {'type': {'$ne': 1}},
             where_query
         ]}
-        #print(min_height)
 
         if min_height is not None:
-            where_query['$and'].append({'blockHeight': {'$gt': int(min_height)}})
+            where_query['$and'].append({'blockHeight':
+                                        {'$gt': int(min_height)}})
 
     tx_count = await Transaction.count(where_query)
 
-    transactions = [tx async for tx in Transaction.collection.find(where_query,
-                                                        sort=sort,
-                                                        limit=per_page,
-                                                        skip=(page-1)*per_page)]
+    transactions = [tx async for tx
+                    in Transaction.collection.find(where_query,
+                                                   sort=sort,
+                                                   limit=per_page,
+                                                   skip=(page-1)*per_page)]
 
     if "summary" in mode:
         transactions = [await summarize_tx(tx, address) for tx in transactions]
-    # reusing data from cache here... maybe we should do a search here too ?
-    #unspent_info = (await addresses_unspent_info(await cache_last_block_height())).get(address, {})
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
                     ).get(address, {})
@@ -381,7 +386,6 @@ async def view_address(request):
                'pagination_item': 'transactions'}
 
     return cond_output(request, context, 'address.html')
-
 
 
 async def address_available_outputs(request):
@@ -414,19 +418,19 @@ async def address_available_outputs(request):
                 continue
 
             if output['status'] >= 3:
-                continue # spent
+                continue  # spent
 
             if output['value'] <= 0:
-                continue # something went wrong
+                continue  # something went wrong
 
             if lock_time == -1:
-                continue # consensus locked
+                continue  # consensus locked
 
             if (lock_time < 1000000000000) and (lock_time >= last_height):
-                continue # time locked on a future block
+                continue  # time locked on a future block
 
             if lock_time > db_time:
-                continue # time locked on a future time
+                continue  # time locked on a future time
 
             outputs.append({
                 'hash': tx_hash,
@@ -439,19 +443,23 @@ async def address_available_outputs(request):
                'last_height': last_height,
                'unspent_info': unspent_info,
                'total_available': sum([o['value'] for o in outputs])}
-    return web.json_response(context, dumps=lambda v: json.dumps(v,
-                                                     default=json_util.default))
+
+    return web.json_response(context,
+                             dumps=lambda v: json.dumps(
+                                 v, default=json_util.default))
+
 
 async def address_consensus(request):
     last_height = await get_last_block_height()
     address = request.match_info['address']
 
     where_query = {'$or':
-                    [{'outputs.address': address},
-                     {'inputs.0.address': address}]}
+                   [{'outputs.address': address},
+                    {'inputs.0.address': address}]}
     where_query = {'$and': [
-        {'type': {'$gt': 3}}, # consensus actions
-        {'type': {'$lt': 10}}, # in the future, there will be more actions, ignore them.
+        {'type': {'$gt': 3}},   # consensus actions
+        {'type': {'$lt': 10}},  # in the future, there will be more actions,
+                                # ignore them.
         where_query
     ]}
 
@@ -460,7 +468,7 @@ async def address_consensus(request):
     async for tx in Transaction.collection.find(where_query,
                                                 sort=[('time', 1)]):
         info = tx.get('info', {})
-        if tx['type'] == 4: # registering a consensus node
+        if tx['type'] == 4:  # registering a consensus node
             position = {
                 'type': 'node',
                 'value': info.get('deposit', 0),
@@ -470,7 +478,7 @@ async def address_consensus(request):
             }
             positions.append(position)
 
-        elif tx['type'] == 5: # join a consensus
+        elif tx['type'] == 5:  # join a consensus
             position = {
                 'type': 'stake',
                 'value': info.get('deposit', 0),
@@ -490,16 +498,19 @@ async def address_consensus(request):
             except StopIteration:
                 continue
 
-         # we don't cover other types (yet)
-         # important ones to cover would be red cards and unregister nodes
+        # we don't cover other types (yet)
+        # important ones to cover would be red cards and unregister nodes
 
     context = {'positions': positions,
                'last_height': last_height}
-    return web.json_response(context, dumps=lambda v: json.dumps(v,
-                                                     default=json_util.default))
+    return web.json_response(context,
+                             dumps=lambda v: json.dumps(
+                                v,
+                                default=json_util.default))
 
 
-app.router.add_get('/addresses/outputs/{address}.json', address_available_outputs)
+app.router.add_get('/addresses/outputs/{address}.json',
+                   address_available_outputs)
 app.router.add_get('/addresses/consensus/{address}.json', address_consensus)
 
 app.router.add_get('/addresses/{address}.json', view_address)
@@ -508,6 +519,7 @@ app.router.add_get('/addresses/{address}/{mode}.json', view_address)
 app.router.add_get('/addresses/{address}/{mode}', view_address)
 app.router.add_get('/addresses/{address}/page/{page}.json', view_address)
 app.router.add_get('/addresses/{address}/page/{page}', view_address)
-app.router.add_get('/addresses/{address}/{mode}/page/{page}.json', view_address)
+app.router.add_get('/addresses/{address}/{mode}/page/{page}.json',
+                   view_address)
 app.router.add_get('/addresses/{address}/{mode}/page/{page}', view_address)
 app.router.add_get('/addresses/{address}/{mode}/all.json', view_address)
