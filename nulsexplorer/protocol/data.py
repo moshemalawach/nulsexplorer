@@ -1,7 +1,7 @@
 from hashlib import sha256
 from binascii import hexlify, unhexlify
 try:
-    from secp256k1 import PrivateKey
+    from secp256k1 import PrivateKey, PublicKey
 except ImportError:
     print("Can't import secp256k1, can't verify and sign tx.")
 import six
@@ -14,7 +14,7 @@ ADDRESS_LENGTH = 23
 HASH_LENGTH = 34
 
 B58_DIGITS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-MESSAGE_TEMPLATE = "\x18NULS Signed Data:\n{}"
+MESSAGE_TEMPLATE = "\x18NULS Signed Data:\n%b"
 
 COIN_UNIT = 100000000
 CHEAP_UNIT_FEE = 100000
@@ -137,11 +137,13 @@ class NulsSignature(BaseNulsData):
 
     @classmethod
     def sign_message(cls, pri_key, message):
-        privkey = PrivateKey(pri_key, raw=True) # we expect to have a private key as bytes. unhexlify it before passing.
+        # we expect to have a private key as bytes. unhexlify it before passing
+        privkey = PrivateKey(pri_key, raw=True)
         item = cls()
+        message = VarInt(len(message)).encode() + message
         item.pub_key = privkey.pubkey.serialize()
-        item.digest_bytes = digest_bytes
-        sig_check = privkey.ecdsa_sign(MESSAGE_TEMPLATE.format(message))
+        # item.digest_bytes = digest_bytes
+        sig_check = privkey.ecdsa_sign(MESSAGE_TEMPLATE % message)
         item.sig_ser = privkey.ecdsa_serialize(sig_check)
         return item
 
@@ -155,11 +157,13 @@ class NulsSignature(BaseNulsData):
         else:
             return output
 
-    def verify(message):
+    def verify(self, message):
+        pub = PublicKey(self.pri_key, raw=True)
+        message = VarInt(len(message)).encode() + message
         try:
             sig_raw = pub.ecdsa_deserialize(self.sig_ser)
-            good = pub.ecdsa_verify(MESSAGE_TEMPLATE.format(message), sig_raw)
-        except:
+            good = pub.ecdsa_verify(MESSAGE_TEMPLATE % message, sig_raw)
+        except Exception:
             good = False
         return good
 
