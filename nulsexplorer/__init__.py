@@ -1,4 +1,6 @@
-#
+import uvloop
+uvloop.install()
+
 TRANSACTION_TYPES = {
     1: "consensus reward",
     2: "transfer transaction",
