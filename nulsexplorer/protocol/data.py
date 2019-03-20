@@ -371,9 +371,9 @@ class VarInt:
         elif size == 3:
             return bytes((253, self.value&255, self.value >> 8))
         elif size == 5:
-            return bytes((254, )) + writeUint32(self.value)
+            return bytes((254, )) + struct.pack("<I", self.value)
         else:
-            return bytes((255, )) + writeUint64(self.value)
+            return bytes((255, )) + struct.pack("<Q", self.value)
 
 def sign_message(pri_key, message):
     privkey = PrivateKey(pri_key, raw=True) # we expect to have a private key as bytes. unhexlify it before passing.
