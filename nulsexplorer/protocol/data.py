@@ -150,7 +150,7 @@ class NulsSignature(BaseNulsData):
     def serialize(self, with_length=False):
         output = b''
         output += write_with_length(self.pub_key)
-        output += bytes([0]) #alg ecc type
+        output += bytes([0])  # alg ecc type
         output += write_with_length(self.sig_ser)
         if with_length:
             return write_with_length(output)
@@ -158,7 +158,7 @@ class NulsSignature(BaseNulsData):
             return output
 
     def verify(self, message):
-        pub = PublicKey(self.pri_key, raw=True)
+        pub = PublicKey(self.pub_key, raw=True)
         message = VarInt(len(message)).encode() + message
         try:
             sig_raw = pub.ecdsa_deserialize(self.sig_ser)
