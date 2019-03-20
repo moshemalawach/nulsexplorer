@@ -9,12 +9,15 @@ import time
 import struct
 import hashlib
 
+import logging
+LOGGER = logging.getLogger('protocol.data')
+
 PLACE_HOLDER = b"\xFF\xFF\xFF\xFF"
 ADDRESS_LENGTH = 23
 HASH_LENGTH = 34
 
 B58_DIGITS = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
-MESSAGE_TEMPLATE = "\x18NULS Signed Data:\n%b"
+MESSAGE_TEMPLATE = b"\x18NULS Signed Message:\n%b"
 
 COIN_UNIT = 100000000
 CHEAP_UNIT_FEE = 100000
@@ -160,10 +163,12 @@ class NulsSignature(BaseNulsData):
     def verify(self, message):
         pub = PublicKey(self.pub_key, raw=True)
         message = VarInt(len(message)).encode() + message
+        LOGGER.debug("Comparing with %r" % (MESSAGE_TEMPLATE % message))
         try:
             sig_raw = pub.ecdsa_deserialize(self.sig_ser)
             good = pub.ecdsa_verify(MESSAGE_TEMPLATE % message, sig_raw)
         except Exception:
+            LOGGER.exception("Verification failed")
             good = False
         return good
 
