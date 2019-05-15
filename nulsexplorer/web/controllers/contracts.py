@@ -89,7 +89,6 @@ async def view_contract(request):
     transactions = []
     pagination_count = 0
     holders = []
-    transfers = []
     if (mode in ['summary', 'calls-summary']):
         if mode == "calls-summary":
             where_query['type'] = 101
@@ -106,23 +105,27 @@ async def view_contract(request):
         holders = Transaction.collection.aggregate([
             {'$match': {
                 'info.contractAddress': address,
-                'info.result.tokenTransfers': { '$exists': True, '$ne': [] }
+                'info.result.tokenTransfers': {'$exists': True, '$ne': []}
             }},
             {'$unwind': '$info.result.tokenTransfers'},
             {'$addFields': {
              'transfers': {'$concatArrays': [
-                [['$info.result.tokenTransfers.from', {"$multiply" : [-1, {'$toDouble': "$info.result.tokenTransfers.value"}]}]],
-                [['$info.result.tokenTransfers.to', {'$toDouble': "$info.result.tokenTransfers.value"}]],
+                [['$info.result.tokenTransfers.from',
+                  {"$multiply": [-1,
+                                 {'$toDouble':
+                                  "$info.result.tokenTransfers.value"}]}]],
+                [['$info.result.tokenTransfers.to',
+                  {'$toDouble': "$info.result.tokenTransfers.value"}]],
                 ]}
              }},
             {'$unwind': '$transfers'},
             {'$project': {
                 'transfers': 1
-            } },
-            #{ "$group" : { "_id" : "$transfers.0", "balance" : { "$sum" : "$transfers.1" } } }
-            { "$group" : {
-             "_id" : {'$arrayElemAt': ["$transfers", 0]},
-             "balance" : { "$sum" : {'$arrayElemAt': ["$transfers", 1]} }
+            }},
+            # { "$group" : { "_id" : "$transfers.0", "balance" : { "$sum" : "$transfers.1" } } }
+            {"$group": {
+             "_id": {'$arrayElemAt': ["$transfers", 0]},
+             "balance": {"$sum": {'$arrayElemAt': ["$transfers", 1]}}
              }
             },
             {'$match': {
@@ -132,7 +135,7 @@ async def view_contract(request):
         holders = [b async for b in holders]
 
     elif mode == "transfer-summary":
-        transfers = Transaction.collection.aggregate([
+        transactions = Transaction.collection.aggregate([
             {'$match': {
                 'info.contractAddress': address,
                 'info.result.tokenTransfers': {'$exists': True, '$ne': []}
@@ -154,7 +157,18 @@ async def view_contract(request):
              'nonce': '$info.result.nonce'
              }}
         ])
-        transfers = [b async for b in transfers]
+        transactions = [b async for b in transactions]
+
+        total_count = Transaction.collection.aggregate([
+            {'$match': {
+                'info.contractAddress': address,
+                'info.result.tokenTransfers': {'$exists': True, '$ne': []}
+            }},
+            {'$group': {'_id': None, 'count':
+                        {'$sum': {'$size': '$info.result.tokenTransfers'}}}}
+        ])
+        if await total_count.fetch_next:
+            pagination_count = total_count.next_object()['count']
 
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
@@ -166,7 +180,6 @@ async def view_contract(request):
                'create_tx': create_tx,
                'transactions': transactions,
                'holders': holders,
-               'transfers': transfers,
                'pagination': pagination,
                'last_height': last_height,
                'pagination_count': pagination_count,
