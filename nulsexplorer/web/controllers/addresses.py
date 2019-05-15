@@ -386,7 +386,7 @@ async def view_address(request):
     sort = [('time', -1)]
     min_height = request.query.get('min_height', None)
 
-    if mode not in ['summary', 'full-summary', 'detail']:
+    if mode not in ['summary', 'full-summary', 'token-summary', 'detail']:
         raise web.HTTPNotFound(text="Display mode not found")
     per_page = PER_PAGE
     if "summary" in mode:
@@ -397,38 +397,82 @@ async def view_address(request):
         sort = [('type', -1), ('time', -1)]
 
     page = int(request.match_info.get('page', '1'))
-    where_query = {'$or':
-                   [{'outputs.address': address},
-                    {'inputs.address': address}]}
 
     token_holdings = []
-
-    if mode == "summary":
-        where_query = {'$and': [
-            {'type': {'$ne': 1}},
-            where_query
-        ]}
-
-        if min_height is not None:
-            where_query['$and'].append({'blockHeight':
-                                        {'$gt': int(min_height)}})
-
-        if not request.rel_url.path.endswith('/all.json'):
-            token_holdings = await get_address_tokens(address)
-
-    tx_count = await Transaction.count(where_query)
-
-    transactions = [tx async for tx
-                    in Transaction.collection.find(where_query,
-                                                   sort=sort,
-                                                   limit=per_page,
-                                                   skip=(page-1)*per_page)]
-
-    if "summary" in mode:
-        transactions = [await summarize_tx(tx, address) for tx in transactions]
+    tx_count = 0
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
                     ).get(address, {})
+
+    if mode in ['summary', 'full-summary', 'detail']:
+        where_query = {'$or':
+                       [{'outputs.address': address},
+                        {'inputs.address': address}]}
+
+        if mode == "summary":
+            where_query = {'$and': [
+                {'type': {'$ne': 1}},
+                where_query
+            ]}
+
+            if min_height is not None:
+                where_query['$and'].append({'blockHeight':
+                                            {'$gt': int(min_height)}})
+
+            if not request.rel_url.path.endswith('/all.json'):
+                token_holdings = await get_address_tokens(address)
+
+        tx_count = await Transaction.count(where_query)
+
+        transactions = [tx async for tx
+                        in Transaction.collection.find(where_query,
+                                                       sort=sort,
+                                                       limit=per_page,
+                                                       skip=(page-1)*per_page)]
+
+        if "summary" in mode:
+            transactions = [await summarize_tx(tx, address)
+                            for tx in transactions]
+
+    if mode == 'token-summary':
+        token_holdings = await get_address_tokens(address)
+        transactions = Transaction.collection.aggregate([
+            {'$match': {'$and': [
+                {'type': {'$in': [100, 101]}},
+                {'$or': [
+                    {'info.result.tokenTransfers.from': address},
+                    {'info.result.tokenTransfers.to': address},
+                ]}
+            ]}},
+            {'$unwind': '$info.result.tokenTransfers'},
+            {'$sort': {'time': -1}},
+            {'$skip': (page-1)*per_page},
+            {'$limit': per_page},
+            {'$project': {
+             'transfer': '$info.result.tokenTransfers',
+             'hash': 1,
+             'blockHeight': 1,
+             'fee': 1,
+             'time': 1,
+             'remark': 1,
+             'gasUsed': '$info.result.gasUsed',
+             'price': '$info.result.price',
+             'totalFee': '$info.result.totalFee',
+             'nonce': '$info.result.nonce'
+             }}
+        ])
+        transactions = [b async for b in transactions]
+
+        total_count = Transaction.collection.aggregate([
+            {'$match': {
+                'info.contractAddress': address,
+                'info.result.tokenTransfers': {'$exists': True, '$ne': []}
+            }},
+            {'$group': {'_id': None, 'count':
+                        {'$sum': {'$size': '$info.result.tokenTransfers'}}}}
+        ])
+        if await total_count.fetch_next:
+            tx_count = total_count.next_object()['count']
 
     pagination = Pagination(page, per_page, tx_count)
 

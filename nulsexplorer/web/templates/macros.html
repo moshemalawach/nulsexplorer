@@ -131,6 +131,46 @@
 </tr>
 {%- endmacro %}
 
+{% macro token_tx_summary(transaction, display_token_info=False) -%}
+<tr>
+  <td class="cell-20 cell-ellipsis"><a href="/transactions/{{transaction.hash}}">{{transaction.hash}}</a></td>
+  <td>{{transaction.blockHeight}}</td>
+  <td>{{datetime.fromtimestamp(int(transaction.time/1000)).strftime('%Y-%m-%d %H:%M:%S')}}</td>
+  <td class="cell-20 cell-ellipsis">
+    {% if transaction.transfer.from != None %}
+    <a href="/addresses/{{transaction.transfer.from}}">
+      {{transaction.transfer.from}}
+    </a>
+    {% endif %}
+  </td>
+  <td class="cell-20 cell-ellipsis">
+    {% if transaction.transfer.to != None %}
+    <a href="/addresses/{{transaction.transfer.to}}">
+      {{transaction.transfer.to}}
+    </a>
+    {% endif %}
+  </td>
+  <td>
+    {% if (transaction.remark) %}
+    <span title="{{transaction.remark}}">
+      <i class="fe fe-info"></i>
+    </span>
+    {% endif %}
+  </td>
+  <td>
+    {{transaction.transfer.value and "%0.2f"%(float(transaction.transfer.value)/10**transaction.transfer.decimals) or ''}}</td>
+  {% if display_token_info %}
+    <td>
+      {{transaction.transfer.symbol}}
+      <a href="/addresses/contracts/{{transaction.transfer.contractAddress}}">
+         <span class="badge badge-secondary text-white"><i class="fe fe-cpu"></i></span>
+       </a>
+    </td>
+  {% endif %}
+  <td>{{transaction.totalFee/100000000}}</td>
+</tr>
+{%- endmacro %}
+
 {% macro paginate(pagination, base_url="", ulclass="", navclass="") -%}
 {% if pagination %}
   {% if not base_url %}
