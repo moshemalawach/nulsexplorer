@@ -350,7 +350,8 @@ async def get_address_tokens(holder_address):
             'holder': {'$arrayElemAt': ["$transfers", 0]},
             'contractAddress': '$info.result.tokenTransfers.contractAddress',
             'name': '$info.result.tokenTransfers.name',
-            'symbol': '$info.result.tokenTransfers.symbol'
+            'symbol': '$info.result.tokenTransfers.symbol',
+            'decimals': '$info.result.tokenTransfers.decimals'
         }},
         {'$match': {
             'holder': holder_address  # we only keep the target holder
