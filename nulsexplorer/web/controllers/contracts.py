@@ -81,6 +81,7 @@ async def view_contract(request):
 
     page = int(request.match_info.get('page', '1'))
     per_page = PER_PAGE_SUMMARY
+    pagination_item = 'transactions'
 
     where_query = {'$or':
                     [{'info.contractAddress': address},
@@ -102,6 +103,7 @@ async def view_contract(request):
         transactions = [await summarize_tx(tx, address) for tx in transactions]
 
     if mode == "holders":
+        pagination_item = 'holders'
         holders = Transaction.collection.aggregate([
             {'$match': {
                 'info.contractAddress': address,
@@ -126,13 +128,30 @@ async def view_contract(request):
             {"$group": {
              "_id": {'$arrayElemAt': ["$transfers", 0]},
              "balance": {"$sum": {'$arrayElemAt': ["$transfers", 1]}}
-             }
-            },
+             }},
             {'$match': {
                 '_id': {'$ne': None}
-            }}
+            }},
+            {'$sort': {'balance': -1}},
+            {'$skip': (page-1)*per_page},
+            {'$limit': per_page}
         ])
         holders = [b async for b in holders]
+
+        total_count = Transaction.collection.aggregate([
+            {'$match': {
+                'info.contractAddress': address,
+                'info.result.tokenTransfers': {'$exists': True, '$ne': []}
+            }},
+            {'$unwind': '$info.result.tokenTransfers'},
+            {"$group": {
+                "_id": "$info.result.tokenTransfers.to"
+            }},
+            {'$group': {'_id': None, 'count':
+                        {'$sum': 1}}}
+        ])
+        if await total_count.fetch_next:
+            pagination_count = total_count.next_object()['count']
 
     elif mode == "transfer-summary":
         transactions = Transaction.collection.aggregate([
@@ -187,7 +206,7 @@ async def view_contract(request):
                'pagination_page': page,
                'pagination_total': pagination_count,
                'pagination_per_page': per_page,
-               'pagination_item': 'transactions',
+               'pagination_item': pagination_item,
                'unspent_info': unspent_info}
 
     return cond_output(request, context, 'contract.html')
