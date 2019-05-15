@@ -464,10 +464,13 @@ async def view_address(request):
         transactions = [b async for b in transactions]
 
         total_count = Transaction.collection.aggregate([
-            {'$match': {
-                'info.contractAddress': address,
-                'info.result.tokenTransfers': {'$exists': True, '$ne': []}
-            }},
+            {'$match': {'$and': [
+                {'type': {'$in': [100, 101]}},
+                {'$or': [
+                    {'info.result.tokenTransfers.from': address},
+                    {'info.result.tokenTransfers.to': address},
+                ]}
+            ]}},
             {'$group': {'_id': None, 'count':
                         {'$sum': {'$size': '$info.result.tokenTransfers'}}}}
         ])
