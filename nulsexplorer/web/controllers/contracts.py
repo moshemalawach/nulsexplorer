@@ -89,6 +89,7 @@ async def view_contract(request):
     transactions = []
     pagination_count = 0
     holders = []
+    transfers = []
     if (mode in ['summary', 'calls-summary']):
         if mode == "calls-summary":
             where_query['type'] = 101
@@ -123,9 +124,37 @@ async def view_contract(request):
              "_id" : {'$arrayElemAt': ["$transfers", 0]},
              "balance" : { "$sum" : {'$arrayElemAt': ["$transfers", 1]} }
              }
-            }
+            },
+            {'$match': {
+                '_id': {'$ne': None}
+            }}
         ])
         holders = [b async for b in holders]
+
+    elif mode == "transfer-summary":
+        transfers = Transaction.collection.aggregate([
+            {'$match': {
+                'info.contractAddress': address,
+                'info.result.tokenTransfers': {'$exists': True, '$ne': []}
+            }},
+            {'$unwind': '$info.result.tokenTransfers'},
+            {'$sort': {'time': -1}},
+            {'$skip': (page-1)*per_page},
+            {'$limit': per_page},
+            {'$project': {
+             'transfer': '$info.result.tokenTransfers',
+             'hash': 1,
+             'blockHeight': 1,
+             'fee': 1,
+             'time': 1,
+             'remark': 1,
+             'gasUsed': '$info.result.gasUsed',
+             'price': '$info.result.price',
+             'totalFee': '$info.result.totalFee',
+             'nonce': '$info.result.nonce'
+             }}
+        ])
+        transfers = [b async for b in transfers]
 
     unspent_info = (await addresses_unspent_info(last_height,
                                                  address_list=[address])
@@ -133,11 +162,11 @@ async def view_contract(request):
 
     pagination = Pagination(page, per_page, pagination_count)
 
-
     context = {'address': address,
                'create_tx': create_tx,
                'transactions': transactions,
                'holders': holders,
+               'transfers': transfers,
                'pagination': pagination,
                'last_height': last_height,
                'pagination_count': pagination_count,
