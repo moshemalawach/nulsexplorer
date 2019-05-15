@@ -322,6 +322,59 @@ async def addresses_stats(request):
 app.router.add_get('/addresses/stats', addresses_stats)
 
 
+async def get_address_tokens(holder_address):
+    holdings = Transaction.collection.aggregate([
+        {'$match': {
+            '$and': [
+                {'type': {'$in': [100, 101]}},
+                {'$or': [
+                    {'info.result.tokenTransfers.from': holder_address},
+                    {'info.result.tokenTransfers.to': holder_address},
+                ]}
+            ]
+        }},
+        {'$unwind': '$info.result.tokenTransfers'},
+        {'$addFields': {
+         'transfers': {'$concatArrays': [
+            [['$info.result.tokenTransfers.from',
+              {"$multiply": [-1,
+                             {'$toDouble':
+                              "$info.result.tokenTransfers.value"}]}]],
+            [['$info.result.tokenTransfers.to',
+              {'$toDouble': "$info.result.tokenTransfers.value"}]],
+            ]}
+         }},
+        {'$unwind': '$transfers'},
+        {'$project': {
+            'transfers': 1,
+            'holder': {'$arrayElemAt': ["$transfers", 0]},
+            'contractAddress': '$info.result.tokenTransfers.contractAddress',
+            'name': '$info.result.tokenTransfers.name',
+            'symbol': '$info.result.tokenTransfers.symbol'
+        }},
+        {'$match': {
+            'holder': holder_address  # we only keep the target holder
+        }},
+        {"$group": {
+            "_id": '$contractAddress',
+            "name": {'$first': '$name'},
+            "symbol": {'$first': '$symbol'},
+            "decimals": {'$first': '$decimals'},
+            "balance": {"$sum": {'$arrayElemAt': ["$transfers", 1]}}
+         }},
+        {'$project': {
+            '_id': 0,
+            'name': 1,
+            'symbol': 1,
+            'balance': 1,
+            'decimals': 1,
+            'contractAddress': '$_id'
+        }},
+        {'$sort': {'symbol': 1}}
+    ])
+    return [b async for b in holdings]
+
+
 # @aiohttp_jinja2.template('address.html')
 async def view_address(request):
     """ Address view
@@ -347,6 +400,8 @@ async def view_address(request):
                    [{'outputs.address': address},
                     {'inputs.address': address}]}
 
+    token_holdings = []
+
     if mode == "summary":
         where_query = {'$and': [
             {'type': {'$ne': 1}},
@@ -356,6 +411,9 @@ async def view_address(request):
         if min_height is not None:
             where_query['$and'].append({'blockHeight':
                                         {'$gt': int(min_height)}})
+
+        if not request.rel_url.path.endswith('/all.json'):
+            token_holdings = await get_address_tokens(address)
 
     tx_count = await Transaction.count(where_query)
 
@@ -379,6 +437,7 @@ async def view_address(request):
                'unspent_info': unspent_info,
                'last_height': last_height,
                'tx_count': tx_count,
+               'token_holdings': token_holdings,
                'mode': mode,
                'pagination_page': page,
                'pagination_total': tx_count,
