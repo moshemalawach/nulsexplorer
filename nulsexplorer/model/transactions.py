@@ -30,6 +30,8 @@ class Transaction(BaseClass):
                Index("info.post.type"),
                Index("info.post.ref"),
                Index("info.post.content.tags"),
+               Index("info.result.tokenTransfers.from"),
+               Index("info.result.tokenTransfers.to"),
                Index([("time", pymongo.DESCENDING),
                       ("type", pymongo.ASCENDING)]),
                #Index([("outputs.status", pymongo.ASCENDING),
