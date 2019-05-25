@@ -69,9 +69,18 @@ async def request_block(session, height=None, hash=None, use_bytes=True):
 
     return block
 
+
 async def request_consensus(session):
     resp = await api_request(session, 'consensus/agent/list?pageSize=100')
-    return resp['list']
+    nodes = resp['list']
+    if resp['pages'] > 1:
+        for i in range(2, resp['pages']+1):
+            resp = await api_request(
+                session,
+                'consensus/agent/list?pageSize=100&pageNumber=%d' % i)
+            nodes += resp['list']
+    return nodes
+
 
 async def check_blocks():
     last_stored_height = await get_last_block_height()
