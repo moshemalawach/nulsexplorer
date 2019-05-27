@@ -31,13 +31,25 @@ async def addresses_unspent_txs(last_block_height, check_time=None,
     if check_time is None:
         check_time = datetime.datetime.now()
 
-    match_step = {'$match': {'outputs.status': {'$lt': 3}}}
-    matches = [match_step]
+    match_step_post = {'$match': {'outputs.status': {'$lt': 3}}}
+    match_step_pre = {'$match': {
+        'outputs': {
+            '$elemMatch': {
+                'status': {'$lt': 3}
+            }
+        }
+    }}
+    
     if address_list is not None:
         if len(address_list) > 1:
-            match_step['$match']['outputs.address'] = {'$in': address_list}
+            match_step_post['$match']['outputs.address'] = \
+                {'$in': address_list}
+            match_step_pre['$match']['outputs']['$elemMatch']['address'] = \
+                {'$in': address_list}
         else:
-            match_step['$match']['outputs.address'] = address_list[0]
+            match_step_post['$match']['outputs.address'] = address_list[0]
+            match_step_pre['$match']['outputs']['$elemMatch']['address'] = \
+                address_list[0]
     #     matches.append({
     #         '$match': {'outputs.address': {'$in': address_list}}
     #     })
@@ -49,10 +61,10 @@ async def addresses_unspent_txs(last_block_height, check_time=None,
         }]
 
     aggregate = Transaction.collection.aggregate(
-        matches +
+        [match_step_pre] +
         [{'$project': {
             'outputs': 1
-        }}] + [{'$unwind': '$outputs'}] + matches + [
+        }}] + [{'$unwind': '$outputs'}] + [match_step_post] + [
         {'$group': {'_id': '$outputs.address',
                     'unspent_count': {'$sum': 1},
                     'unspent_value': {'$sum': '$outputs.value'},
