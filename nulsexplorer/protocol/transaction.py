@@ -315,12 +315,12 @@ class Transaction(BaseNulsData):
         if self.type in [2, 10, 101]:
             unit_fee = CHEAP_UNIT_FEE
 
-        fee = unit_fee * math.floor(size / KB)  # per kb
+        fee = unit_fee * math.ceil(size / KB)  # per kb
 
-        if size % KB > 0:
-            # why is it needed, to be sure we have at least the fee ?
-            # or am I doing a bad port from java, where they work with int
-            # and not mutable ?
-            fee += unit_fee
+        # if size % KB > 0:
+        #     # why is it needed, to be sure we have at least the fee ?
+        #     # or am I doing a bad port from java, where they work with int
+        #     # and not mutable ?
+        #     fee += unit_fee
 
         return fee
