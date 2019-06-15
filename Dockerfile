@@ -20,10 +20,10 @@ RUN /usr/local/bin/pip install --upgrade setuptools
 
 WORKDIR /app
 
-ADD . /app/
-
+ADD ./requirements.txt /app/requirements.txt
 RUN /usr/local/bin/pip install -r requirements.txt
 
+ADD . /app/
 RUN /usr/local/bin/python setup.py develop
 
 RUN chmod +x /app/bin/launch.sh
