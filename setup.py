@@ -29,7 +29,7 @@ setup(name='nulsexplorer',
           "aiocron",
           "pyyaml",
           "configmanager",
-          "ipfsapi",
+          "aioipfs",
           "uvloop"#,
           #"secp256k1"
       ],

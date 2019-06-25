@@ -1,4 +1,4 @@
-import ipfsapi
+import aioipfs
 import asyncio
 import aiohttp
 import logging
@@ -22,36 +22,52 @@ async def add_file(fileobject, filename):
         return await resp.json()
 
 
-async def get_ipfs_api():
+async def get_ipfs_api(timeout=60):
     from nulsexplorer.web import app
     host = app['config'].ipfs.host.value
     port = app['config'].ipfs.port.value
 
-    return ipfsapi.connect(host, port)
+    return aioipfs.AsyncIPFS(host=host, port=port, read_timeout=timeout)
 
 
-async def get_json(hash):
-    loop = asyncio.get_event_loop()
-    api = await get_ipfs_api()
-    result = await loop.run_in_executor(
-        None, api.get_json, hash)
+async def get_json(hash, timeout=2):
+    # loop = asyncio.get_event_loop()
+    api = await get_ipfs_api(timeout=timeout)
+    try:
+        result = await api.cat(hash)
+        result = json.loads(result)
+    except (concurrent.futures.TimeoutError, json.JSONDecodeError):
+        result = None
+    finally:
+        await api.close()
+
     return result
 
 
-async def pin_add(hash):
-    loop = asyncio.get_event_loop()
-    api = await get_ipfs_api()
-    result = await loop.run_in_executor(
-        None, api.pin_add, hash)
+async def pin_add(hash, timeout=5):
+    # loop = asyncio.get_event_loop()
+    api = await get_ipfs_api(timeout=timeout)
+    try:
+        result = None
+        async for ret in api.pin.add(hash):
+            result = ret
+    except (concurrent.futures.TimeoutError, json.JSONDecodeError):
+        result = None
+    finally:
+        await api.close()
+
     return result
 
 
 async def add_json(value):
-    loop = asyncio.get_event_loop()
+    # loop = asyncio.get_event_loop()
     api = await get_ipfs_api()
-    result = await loop.run_in_executor(
-        None, api.add_json, value)
-    return result
+    try:
+        result = await api.add_json(value)
+    finally:
+        await api.close()
+
+    return result['Hash']
 
 
 async def process_transfer_ipfs_remark(tx):
