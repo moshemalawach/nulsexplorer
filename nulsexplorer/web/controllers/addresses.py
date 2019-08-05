@@ -456,7 +456,7 @@ async def view_address(request):
                     {'info.result.tokenTransfers.to': address},
                 ]}
             ]}},
-            {'$unwind': '$info.result.tokenTransfers'},,
+            {'$unwind': '$info.result.tokenTransfers'},
             {'$match': {'$or': [
                 {'info.result.tokenTransfers.from': address},
                 {'info.result.tokenTransfers.to': address},
