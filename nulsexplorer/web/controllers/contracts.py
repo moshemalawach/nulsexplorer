@@ -80,7 +80,7 @@ async def view_contract(request):
         raise web.HTTPNotFound(text="Contract not found")
 
     page = int(request.match_info.get('page', '1'))
-    per_page = PER_PAGE_SUMMARY
+    per_page = int(request.query.get('min_height', PER_PAGE_SUMMARY))
     pagination_item = 'transactions'
 
     where_query = {'$or':
