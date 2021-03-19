@@ -22,7 +22,7 @@ idna-ssl==1.0.1
 ipython==6.4.0
 ipython-genutils==0.2.0
 jedi==0.12.1
-Jinja2==2.10
+Jinja2==2.11.3
 MarkupSafe==1.0
 motor==1.2.2
 multidict==4.3.1
